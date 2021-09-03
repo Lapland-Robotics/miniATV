@@ -1,2 +1,2 @@
 # miniATV
-ROS, autonomous electric mini ATV 
+ROS with teb_local_planner, autonomous electric mini ATV.
