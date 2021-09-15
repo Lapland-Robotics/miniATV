@@ -1,3 +1,5 @@
+# This is Robot
+
 ## devrules
 ### Rename ESP32 USB-port:
 1. Read serial number (ATTRS{serial}) 
@@ -9,3 +11,12 @@ $ udevadm info --name=/dev/ttyUSBx --attribute-walk # USBx = where ESP32 is conn
 
 ### Rename RPLidar USB-port:
 Move 99-rplidar-usb.rules to path /etc/udev/rules.d/
+
+### atv_setup ros package:
+Move rest of atv_setup (folder) to yours ROS workspace source folder (assuming here ws is ~/catkin_ws/src).
+```
+$ cd catkin_ws/src
+$ catkin_create_pkg atv_setup
+$ cd ~/catkin_ws
+$ catkin_make
+```
