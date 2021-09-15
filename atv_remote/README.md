@@ -30,6 +30,7 @@ $ catkin_make
 ```
 
 # How to remotely control miniATV....
-Laucnh ATV: Click the ATVremote icon.
 
-Laucnh Waypoints navigation: Click the WaypointsRemote icon.
+### Launch ATV: Click the ATVremote icon.
+
+### Launch Waypoints navigation: Click the WaypointsRemote icon.
