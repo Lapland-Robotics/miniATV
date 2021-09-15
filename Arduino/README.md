@@ -2,8 +2,11 @@
 ## Install Arduino IDE
 You can use _Ubuntu Sofware_ -application for installing Arduino IDE
 or follow:
+
 [https://www.arduino.cc/en/guide/linux](https://www.arduino.cc/en/guide/linux)
+
 or:
+
 [https://ubuntu.com/tutorials/install-the-arduino-ide#1-overview](https://ubuntu.com/tutorials/install-the-arduino-ide#1-overview)
 
 ## Install ros_lib into the Arduino Environment
@@ -30,7 +33,8 @@ $ rosrun rosserial_arduino make_libraries.py ros_lib
   
 ## ESP32 rebooting when Arduino IDE ROS libraries used:
 Serial port monitor show:
-´´´
+  
+```
 Rebooting...
 ets Jun  8 2016 00:22:57
 
@@ -50,10 +54,12 @@ abort() was called at PC 0x400d49c7 on core 1
 ELF file SHA256: 0000000000000000
 
 Backtrace: 0x40084cb4:0x3ffb1de0 0x40084f31:0x3ffb1e00 0x400d49c7:0x3ffb1e20 0x400e44b3:0x3ffb1e50 0x400e3f4d:0x3ffb1e80 0x400e4100:0x3ffb1ea0 0x400e7654:0x3ffb1ee0 0x400d2632:0x3ffb1f00 0x400d2032:0x3ffb1f50 0x400d1b6b:0x3ffb1f80 0x400d2efa:0x3ffb1fb0 0x40085f32:0x3ffb1fd0
+
 ```
   
 HOW TO AVOID THIS:
 Thank you LorenzF in [https://github.com/espressif/arduino-esp32/issues/4807](https://github.com/espressif/arduino-esp32/issues/4807)
+
 On Arduino Ros library ros_lib there is ros.h .
 
 Replace or comment this:
@@ -76,9 +82,9 @@ with this:
 ## CHANGE ROSSERIAL BAUD RATE
 You have to change parameters in ArduinoHardware.h in ros_lib.
 
-## Jetson Nano UART: (THIS WONT WORK, BECAUSE JETSON NANO)
+## Jetson Nano UART: (THIS WONT WORK, DON'T WASTE YOUR TIME)
 Before You Start
-The stock Jetson Nano starts a console on the ttyTHS1 serial port at startup through a service. The script that starts the service is nvgetty.sh which launches getty. The script is located in /etc/systemd. While this does not conflict with the script presented here, consider disabling the console if you are using the serial port to avoid conflicts. Note that normal udev rules will be overridden by the console while the service is running. To disable the console:
+(Copied from some where nVidia Developer Forum) The stock Jetson Nano starts a console on the ttyTHS1 serial port at startup through a service. The script that starts the service is nvgetty.sh which launches getty. The script is located in /etc/systemd. While this does not conflict with the script presented here, consider disabling the console if you are using the serial port to avoid conflicts. Note that normal udev rules will be overridden by the console while the service is running. To disable the console:
 ```
 $ systemctl stop nvgetty
 $ systemctl disable nvgetty
