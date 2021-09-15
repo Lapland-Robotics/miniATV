@@ -1,6 +1,12 @@
-# This is Robot
+# This is miniATV Robot
 
 ## devrules
+## dialout group
+Add your username to dialout group so you don't need chmod every ttyUSBx port...
+```
+$ sudo adduser <your user name> dialout
+```
+
 ### Rename ESP32 USB-port:
 1. Read serial number (ATTRS{serial}) 
 ```
