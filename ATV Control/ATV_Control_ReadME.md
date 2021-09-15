@@ -1,1 +1,1 @@
-### ATVmini controlling and launching
+### ATV Control for controlling and launching miniATV
