@@ -114,7 +114,7 @@ $ catkin_make
 ## dialout group
 Add your username to dialout group so you don't need chmod every ttyUSBx port...
 ```
-$ sudo adduser <your user name> dialout
+$ sudo adduser <your username> dialout
 ```
 
 ### Rename ESP32 USB-port:
