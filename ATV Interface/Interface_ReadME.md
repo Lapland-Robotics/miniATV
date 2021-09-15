@@ -1,4 +1,4 @@
-Schematics and layout for ATVinterface card:
+Schematics and layouts for ATVinterface card:
 - ESP32 DevKit V4 socket
 - interface for drive and steering motors
 - interface for wheel speed sensors
