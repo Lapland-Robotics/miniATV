@@ -1,9 +1,13 @@
 # miniATV
 ROS with teb_local_planner, autonomous electric mini ATV.
+nVidia Jetson Nano with RPLidar and wheel odometry.
 
 ### atv_setup: Codes for miniATV robot.
 ### atv_control: Codes for control and launch miniATV remotely.
 ### atv_simulator: Codes for simulate miniATV (atv_setup) in Stage simulator
+
+### ATV Interface: Hardware description for drive and steering motors, wheel speed sensors, steering angle sensor and extensions.
+### Arduino/ATV: Arduino IDE sketch for programming ATV_interface ESP32
 
 ### Note! For waypoint generation =>=> "[Waypoints](https://github.com/Lapland-Robotics/Waypoints)" -repo!
 
