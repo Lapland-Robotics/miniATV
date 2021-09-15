@@ -3,14 +3,17 @@
 # Origin: https://github.com/cristian-frincu/navifgation_waypoints_scripts
 # Edited: HK
 
-FILE = '/home/hk/catkin_ws/src/atv_setup/waypoints/waypoints.csv'
+
 #FILE = '/home/hk/catkin_ws/src/waypoints/waypoints/waypoints.csv'
+import os
 import rospy
 import actionlib
 
 #move_base_msgs
 from move_base_msgs.msg import *
 from geometry_msgs.msg import *
+
+FILE = os.path.expanduser("~") + '/catkin_ws/src/atv_setup/waypoints/waypoints.csv'
 
 def simple_move(x,y,z,w):
 

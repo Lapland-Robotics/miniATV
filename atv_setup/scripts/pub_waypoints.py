@@ -3,7 +3,7 @@
 #idea from: Thanks Oscar Lima from https://answers.ros.org/question/203782/rviz-marker-line_strip-is-not-displayed/
 #Edited HK 
 
-
+import os
 import rospy
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Point
@@ -13,8 +13,7 @@ rospy.init_node('waypoint_publisher')
 pub_waypoints_lines = rospy.Publisher('~waypoints_pub', MarkerArray, queue_size=1)
 rospy.loginfo('Publishing Waypoints')
 
-FILE = '/home/hk/catkin_ws/src/atv_setup/waypoints/waypoints.csv'
-#FILE = '/home/hk/catkin_ws/src/waypoints/waypoints/waypoints.csv'
+FILE = os.path.expanduser("~") + '/catkin_ws/src/atv_setup/waypoints/waypoints.csv'
 
 coordinateCount = 0
 marker_ID_counter = 0
