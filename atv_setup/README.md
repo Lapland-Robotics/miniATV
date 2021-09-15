@@ -111,11 +111,6 @@ $ catkin_make
 ```
 
 ## devrules
-### dialout group
-Add your username to dialout group so you don't need chmod every ttyUSBx port...
-```
-$ sudo adduser <your username> dialout
-## devrules
 ## dialout group
 Add your username to dialout group so you don't need chmod every ttyUSBx port...
 ```
