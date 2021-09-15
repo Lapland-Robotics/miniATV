@@ -1,0 +1,54 @@
+Remote monitoring and control
+http://wiki.ros.org/robotican/Tutorials/Remote%20monitoring%20and%20control
+
+To monitor and command your robot from remote computer you have two main options: one is using a graphical remote access program such as TeamViewer and the other option is using a command-line remote connection such as ssh.
+
+This tutorial is based on the second option and assumes that is finished the Running ROS across multiple machines and Network Setup Tutorials.
+
+First, You will need to install the robotican meta-package http://wiki.ros.org/robotican
+on the remote machine.
+
+For this tutorial assume that the remote computer and the robot are connected to the same network and have that the robot IP is 10.0.0.14 and the remote computer IP is 10.0.0.13. 
+You can check your IP address by typing ifconfig in a terminal.
+
+If you want to check the connectivity between the remote computer and the robot we can ping the robot by running the following command in a terminal:
+ping 10.0.0.14
+
+On target if SSH is not installed:
+sudo apt-get install openssh-server
+
+We will use the robot computer as the ROS master, by setting the ROS_MASTER_URI and ROS_IP variables to the robot's IP. To log into the robot computer we use the following command:
+ssh xxxx@10.0.0.14
+This command will open a ssh channel to the robot. To change the variables we use the following commands:
+export ROS_MASTER_URI=http://10.0.0.14:11311
+export ROS_IP=10.0.0.14
+After this you can run the robot launch file on the robot's computer, for example:
+roslaunch atv_setup atv.launch
+
+On the remote computer we need to set the ROS_MASTER_URI to the robot's IP and the ROS_IP to the remote computer IP. Open a new terminal and type the following:
+export ROS_MASTER_URI=http://10.0.0.14:11311
+export ROS_IP=10.0.0.13
+You will need to type the above two commands in each new terminal that will interact with the robot.
+
+To check that the remote computer can access the robot's topics you can run:
+rostopic list
+If this command return the robot list of topics than the remote connection is successful. You can also try to publish commands to operate the robot.
+
+
+
+Terminal 1
+ssh hk@192.168.0.13
+export ROS_MASTER_URI=http://192.168.0.13:11311
+export ROS_IP=192.168.0.13
+roslaunch atv_setup atv_remote.launch
+
+Terminal 2
+export ROS_MASTER_URI=http://192.168.0.13:11311
+export ROS_IP=192.168.0.12
+rviz
+
+
+OR JUST MAKE *.SH FILES FOR LAUNCHING ABOVE THINGS
+AND THEN RUN YOUR SH FILE LIKE: "bash run_atv_robot_remote1.sh"
+OR EVEN BETER MAKE DESKTOP LAUNCH FILE *.desktop
+

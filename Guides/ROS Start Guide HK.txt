@@ -1,0 +1,876 @@
+Quick Overview of Concepts
+Nodes: A node is an executable that uses ROS to communicate with other nodes.
+Messages: ROS data type used when subscribing or publishing to a topic.
+Topics: Nodes can publish messages to a topic as well as subscribe to a topic to receive messages.
+Master: Name service for ROS (i.e. helps nodes find each other)
+rosout: ROS equivalent of stdout/stderr
+roscore: Master + rosout + parameter server (parameter server will be introduced later)
+
+Nodes
+A node really isn't much more than an executable file within a ROS package. ROS nodes use a ROS client library to communicate with other nodes. Nodes can publish or subscribe to a Topic. Nodes can also provide or use a Service.
+
+
+Configure and run Robot Navigation
+
+Set up your Robot for 2D Navigation
+Setup robot to comply with the 2d navigation package (sensors, costmap2d and robot driver/simulator). Refer to the following tutorial:
+
+
+Setup and Configuration of the Navigation Stack on a Robot
+
+
+Transform Configuration (other transforms)
+
+The navigation stack requires that the robot be publishing information about the relationships between coordinate frames using tf. A detailed tutorial on setting up this configuration can be found here: http://wiki.ros.org/navigation/Tutorials/RobotSetup/TF
+
+Take the transform tree and create it with code.
+High level task taking points in the "base_laser" frame and transforming them to the "base_link" frame. Create a node that will be responsible for publishing the transforms in our system. Create a node to listen to the transform data published over ROS and apply it to transform a point. Start by creating a package for the source code to live in and simple name like "robot_setup_tf". Dependencies on roscpp, tf, and geometry_msgs.
+
+cd catkin_ws/src
+catkin_create_pkg robot_setup_tf roscpp tf geometry_msgs
+
+Broadcasting a Transform
+
+Create the node that will do the work of broadcasting the base_laser → base_link transform over ROS. In the robot_setup_tf package you just created, fire up your favorite editor and paste the following code into the src/tf_broadcaster.cpp file.
+[
+#include <ros/ros.h>
+// tf package provides an implementation of a tf::TransformBroadcaster to help make the task of publishing 
+// transforms easier. To use the TransformBroadcaster, we need to include the tf/transform_broadcaster.h
+// header file.
+#include <tf/transform_broadcaster.h>
+
+int main(int argc, char** argv){
+  ros::init(argc, argv, "robot_tf_publisher");
+  ros::NodeHandle n;
+
+  ros::Rate r(100);
+// Create a TransformBroadcaster object that we'll use later to send the base_link → base_laser transform 
+// over the wire.
+  tf::TransformBroadcaster broadcaster;
+
+  while(n.ok()){
+// Real work. Sending a transform with a TransformBroadcaster requires five arguments. First, we pass in
+// the rotation transform, which is specified by a btQuaternion for any rotation that needs to occur
+// between the two coordinate frames. In this case, we want to apply no rotation, so we send in a
+// btQuaternion constructed from pitch, roll, and yaw values equal to zero. 
+    broadcaster.sendTransform(
+      tf::StampedTransform(
+// btVector3 for any ranslation that we'd like to apply. We do, however, want to apply a translation,
+// so we create a btVector3 corresponding to the laser's x offset of 10cm and z offset of 20cm from the
+// robot base.
+        tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.1, 0.0, 0.2)),
+// Transform being published a timestamp and pass the name of the parent node "base_link"
+// and pass the name of the child node "base_laser"
+        ros::Time::now(),"base_link", "base_laser"));
+    r.sleep();
+  }
+}
+
+]
+
+Using a Transform
+
+Above, we created a node that publishes the base_laser → base_link transform over ROS. Write a node that will use that transform to take a point in the "base_laser" frame and transform it to a point in the "base_link" frame. In the robot_setup_tf package, create a file called src/tf_listener.cpp and paste the following:
+
+[
+#include <ros/ros.h>
+#include <geometry_msgs/PointStamped.h>
+// tf/transform_listener.h header file that we'll need to create a tf::TransformListener.
+// A TransformListener object automatically subscribes to the transform message topic over ROS and manages
+// all transform data coming in over the wire.
+#include <tf/transform_listener.h>
+
+// Create a function that, given a TransformListener, takes a point in the "base_laser" frame and
+// transforms it to the "base_link" frame. This function will serve as a callback for the ros::Timer
+// created in the main() of our program and will fire every second.
+void transformPoint(const tf::TransformListener& listener){
+  //create a point in the base_laser frame that we'd like to transform to the base_link frame
+  geometry_msgs::PointStamped laser_point;
+  laser_point.header.frame_id = "base_laser";
+
+  //use the most recent transform available for our simple example
+  laser_point.header.stamp = ros::Time();
+
+  //some data for the point, arbitrary point in space
+  laser_point.point.x = 1.0;
+  laser_point.point.y = 0.2;
+  laser_point.point.z = 0.0;
+
+  try{
+// Point in the "base_laser" frame we want to transform it into the "base_link" frame. Use the
+// TransformListener object, and call transformPoint() with three arguments: the name of 
+// the frame we want to transform the point to ("base_link" in our case), the point we're transforming,
+// and storage for the transformed point. So, after the call to transformPoint(), base_point holds
+// the same information as laser_point did before only now in the "base_link" frame.
+    geometry_msgs::PointStamped base_point;
+    listener.transformPoint("base_link", laser_point, base_point);
+
+    ROS_INFO("base_laser: (%.2f, %.2f. %.2f) -----> base_link: (%.2f, %.2f, %.2f) at time %.2f",
+        laser_point.point.x, laser_point.point.y, laser_point.point.z,
+        base_point.point.x, base_point.point.y, base_point.point.z, base_point.header.stamp.toSec());
+  }
+// If for some reason the base_laser → base_link transform is unavailable (perhaps the tf_broadcaster is
+// not running), the TransformListener may throw an exception when we call transformPoint().
+// To make sure we handle this gracefully, catch the exception and print out an error for the user.
+  catch(tf::TransformException& ex){
+    ROS_ERROR("Received an exception trying to transform a point from \"base_laser\" to \"base_link\": %s", ex.what());
+  }
+}
+
+int main(int argc, char** argv){
+  ros::init(argc, argv, "robot_tf_listener");
+  ros::NodeHandle n;
+
+  tf::TransformListener listener(ros::Duration(10));
+
+  //we'll transform a point once every second
+  ros::Timer timer = n.createTimer(ros::Duration(1.0), boost::bind(&transformPoint, boost::ref(listener)));
+
+  ros::spin();
+
+}
+
+]
+
+Building the Code
+
+This little example, build it. Open up the CMakeLists.txt file that is autogenerated by roscreate-pkg and add the following lines to the bottom of the file. (catkin_ws/src/"my_robot_setup"/)
+
+add_executable(tf_broadcaster src/tf_broadcaster.cpp)
+add_executable(tf_listener src/tf_listener.cpp)
+target_link_libraries(tf_broadcaster ${catkin_LIBRARIES})
+target_link_libraries(tf_listener ${catkin_LIBRARIES})
+
+Next, make sure to save the file and build the package.
+
+cd catkin_ws
+catkin_make
+(or catkin_make -DCMAKE_BUILD_TYPE=Release)
+(or catkin_make --force-cmake)
+
+
+Running the Code
+
+First terminal, run a core.
+roscore
+
+Second terminal, we'll run our tf_broadcaster
+Remember source:
+source ~/catkin_ws/devel/setup.bash
+rosrun robot_setup_tf tf_broadcaster
+
+Third terminal to run our tf_listener to transform our mock point from the "base_laser" frame to the "base_link" frame.
+source ~/catkin_ws/devel/setup.bash
+rosrun robot_setup_tf tf_listener
+
+If all goes well, you should see the output showing a point being transformed from the "base_laser" frame to the "base_link" frame once a second.
+
+
+
+
+Sensor Information (sensor sources)
+
+
+The navigation stack uses information from sensors to avoid obstacles in the world, it assumes that these sensors are publishing either sensor_msgs/LaserScan or sensor_msgs/PointCloud messages over ROS. For information on publishing these messages over ROS: http://wiki.ros.org/navigation/Tutorials/RobotSetup/Sensors
+
+ROS Message Headers
+Both the sensor_msgs/LaserScan and sensor_msgs/PointCloud message types, like many other messages sent over ROS, contain tf frame and time dependent information. To standardize how this information is sent, the Header message type is used as a field in all such messages.
+The seq field corresponds to an identifier that automatically increases as Messages are sent from a given publisher. The stamp field stores time information that should be associated with data in a Message. In the case of a laser scan, for example, the stamp might correspond to the time at which the scan was taken. The frame_id field stores tf frame information that should be associated with data in a message. In the case of a laser scan, this would be set to the frame in which the scan was taken.
+
+Publishing LaserScans over ROS
+
+IF USING RPLIDAR SKIP THIS AND JUMP TO RPLIDAR
+
+The LaserScan Message
+For robots with laser scanners, ROS provides a special Message type in the sensor_msgs package called LaserScan to hold information about a given scan. LaserScan Messages make it easy for code to work with virtually any laser as long as the data coming back from the scanner can be formatted to fit into the message.
+
+Writing Code to Publish a LaserScan Message
+Publishing a LaserScan message over ROS is fairly straightforward. Provide sample code below to do it.
+[
+#include <ros/ros.h>
+// include the sensor_msgs/LaserScan message that we want to send over the wire.
+#include <sensor_msgs/LaserScan.h>
+
+int main(int argc, char** argv){
+  ros::init(argc, argv, "laser_scan_publisher");
+
+  ros::NodeHandle n;
+// Creates a ros::Publisher that is later used to send LaserScan messages using ROS.
+  ros::Publisher scan_pub = n.advertise<sensor_msgs::LaserScan>("scan", 50);
+// Setting up storage for the dummy data that we're going to use to populate our scan. A real application
+// would pull this data from their laser driver.
+  unsigned int num_readings = 100;
+  double laser_frequency = 40;
+  double ranges[num_readings];
+  double intensities[num_readings];
+
+  int count = 0;
+  ros::Rate r(1.0);
+  while(n.ok()){
+    //generate some fake data for our laser scan
+    for(unsigned int i = 0; i < num_readings; ++i){
+      ranges[i] = count;
+      intensities[i] = 100 + count;
+    }
+    ros::Time scan_time = ros::Time::now();
+// Create a scan_msgs::LaserScan message and fill it with the data that generated in preparation to send it
+// over the wire.
+    //populate the LaserScan message
+    sensor_msgs::LaserScan scan;
+    scan.header.stamp = scan_time;
+    scan.header.frame_id = "laser_frame";
+    scan.angle_min = -1.57;
+    scan.angle_max = 1.57;
+    scan.angle_increment = 3.14 / num_readings;
+    scan.time_increment = (1 / laser_frequency) / (num_readings);
+    scan.range_min = 0.0;
+    scan.range_max = 100.0;
+
+    scan.ranges.resize(num_readings);
+    scan.intensities.resize(num_readings);
+    for(unsigned int i = 0; i < num_readings; ++i){
+      scan.ranges[i] = ranges[i];
+      scan.intensities[i] = intensities[i];
+    }
+// Publish the message over ROS.
+    scan_pub.publish(scan);
+    ++count;
+    r.sleep();
+  }
+}
+]
+
+Publishing PointClouds over ROS
+
+The PointCloud Message
+For storing and sharing data about a number of points in the world, ROS provides a sensor_msgs/PointCloud message. This message, as shown below, is meant to support arrays of points in three dimensions along with any associated data stored as a channel. For example, a PointCloud could be sent over the wire with an "intensity" channel that holds information about the intensity value of each point in the cloud. 
+
+Code to Publish a PointCloud Message
+Publishing a PointCloud with ROS is fairly straightforward. Simple example:
+[
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud.h>
+
+int main(int argc, char** argv){
+  ros::init(argc, argv, "point_cloud_publisher");
+
+  ros::NodeHandle n;
+// Create the ros::Publisher that we'll use to send PointCloud messages out over the wire.
+  ros::Publisher cloud_pub = n.advertise<sensor_msgs::PointCloud>("cloud", 50);
+
+  unsigned int num_points = 100;
+
+  int count = 0;
+  ros::Rate r(1.0);
+  while(n.ok()){
+// Fill in header of the PointCloud message that send out with the relevant frame and timestamp information.
+    sensor_msgs::PointCloud cloud;
+    cloud.header.stamp = ros::Time::now();
+    cloud.header.frame_id = "sensor_frame";
+// Set the number of points in the point cloud so that we can populate them with dummy data.
+    cloud.points.resize(num_points);
+
+// Adds a channel called "intensity" to the PointCloud and sizes it to match the number of points that
+// in the cloud.
+    cloud.channels.resize(1);
+    cloud.channels[0].name = "intensities";
+    cloud.channels[0].values.resize(num_points);
+// Populates the PointCloud message with some dummy data. Also, populates the intensity channel with dummy
+// data.
+    //generate some fake data for our point cloud
+    for(unsigned int i = 0; i < num_points; ++i){
+      cloud.points[i].x = 1 + count;
+      cloud.points[i].y = 2 + count;
+      cloud.points[i].z = 3 + count;
+      cloud.channels[0].values[i] = 100 + count;
+    }
+// Publishes the PointCloud using ROS.
+    cloud_pub.publish(cloud);
+    ++count;
+    r.sleep();
+  }
+}
+]
+
+
+RPLIDAR
+IF USING RPLIDAR
+http://wiki.ros.org/rplidar
+
+Source: https://github.com/Slamtec/rplidar_ros
+cd ~/catkin_ws/src
+git clone https://github.com/Slamtec/rplidar_ros
+cd ~/catkin_ws
+catkin_make
+
+RPLIDAR is a low cost LIDAR sensor suitable for indoor robotic SLAM application. It provides 360 degree scan field, 5.5hz/10hz rotating frequency with guaranteed 8 meter ranger distance, current more than 16m for A2 and 25m for A3 . By means of the high speed image processing engine designed by RoboPeak, the whole cost are reduced greatly, RPLIDAR is the ideal sensor in cost sensitive areas like robots consumer and hardware hobbyist.
+
+RPLIDAR A3 performs high speed distance measurement with more than 16K samples per second,RPLIDAR A2 performs high speed distance measurement with more than 4K/8K samples per second,RPLIDAR A1 supports 2K/4K samples per second. For a scan requires 360 samples per rotation, the 10hz scanning frequency can be achieved. Users can customized the scanning frequency from 2hz to 10hz freely by control the speed of the scanning motor. RPLIDAR will self-adapt the current scanning speed.
+
+The driver publishes device-dependent sensor_msgs/LaserScan data.
+
+
+ROS Nodes
+
+rplidarNode
+rplidarNode is a driver for RPLIDAR. It reads RPLIDAR raw scan result using RPLIDAR's SDK and convert to ROS LaserScan message.
+
+Published Topics
+scan
+(sensor_msgs/LaserScan) it publishes scan topic from the laser.
+
+Services
+stop_motor
+(std_srvs/Empty) Call the serive to stop the motor of rplidar.
+
+start_motor
+(std_srvs/Empty) Call the service to start the motor of rplidar.
+
+Parameters
+serial_port
+(string, default: /dev/ttyUSB0) serial port name used in your system.
+
+serial_baudrate
+(int, default: 115200) serial port baud rate.
+
+frame_id
+(string, default: laser_frame)frame ID for the device.
+
+inverted
+(bool, default: false) indicated whether the LIDAR is mounted inverted.
+
+angle_compensate
+(bool, default: false) indicated whether the driver needs do angle compensation.
+
+scan_mode
+(string, default: std::string()) the scan mode of lidar.
+
+
+Device Settings
+
+Use following udev rules to set permission for a rplidar device.
+KERNEL=="ttyUSB*", MODE="0666"
+
+For fixed rplidar port, you can using the script file to remap the USB port name:
+./scripts/create_udev_rules.sh
+
+Once you have change the USB port remap, you can change the launch file about the serial_port value.
+<param name="serial_port" type="string" value="/dev/rplidar"/>
+
+
+Launch File Examples
+
+Check the authority of rplidar's serial-port :
+ls -l /dev |grep ttyUSB
+
+Add the authority of write: (such as /dev/ttyUSB0)
+sudo chmod 666 /dev/ttyUSB0
+
+Start a rplidar node and view the scan result in rviz.
+#for rplidar A1/A2
+roslaunch rplidar_ros view_rplidar.launch
+or
+#for rplidar A3
+roslaunch rplidar_ros view_rplidar_a3.launch
+
+Start a rplidar node and run rplidar client process to print the raw scan result
+#for rplidar A1/A2
+roslaunch rplidar_ros rplidar.launch
+or #for rplidar A3
+roslaunch rplidar_ros_a3 rplidar.launch
+rosrun rplidar_ros rplidarNodeClient
+
+
+
+
+Odometry Information (odometry source)
+
+
+The navigation stack requires that odometry information be published using tf and the nav_msgs/Odometry message. A tutorial on publishing odometry information: http://wiki.ros.org/navigation/Tutorials/RobotSetup/Odom
+
+Publishing Odometry Information Over ROS
+The navigation stack uses tf to determine the robot's location in the world and relate sensor data to a static map. However, tf does not provide any information about the velocity of the robot. Because of this, the navigation stack requires that any odometry source publish both a transform and a nav_msgs/Odometry message over ROS that contains velocity information.
+
+The nav_msgs/Odometry Message
+The nav_msgs/Odometry message stores an estimate of the position and velocity of a robot in free space.
+The pose in message corresponds to the estimated position of the robot in the odometric frame along with an optional covariance for the certainty of that pose estimate. The twist in this message corresponds to the robot's velocity in the child frame, normally the coordinate frame of the mobile base, along with an optional covariance for the certainty of that velocity estimate.
+
+Using tf to Publish an Odometry transform
+The "tf" software library is responsible for managing the relationships between coordinate frames relevant to the robot in a transform tree. Therefore, any odometry source must publish information about the coordinate frame that it manages. The code below assumes a basic knowledge of tf, reading the Transform Configuration tutorial should be sufficient.
+
+Code
+Code for publishing a nav_msgs/Odometry message over ROS and a transform using tf for a fake robot that just drives in a circle.
+
+Add the dependancy to your package's manifest.xml
+<depend package="tf"/>
+<depend package="nav_msgs"/>
+
+[
+#include <ros/ros.h>
+// publishing both a transform from the "odom" coordinate frame to the "base_link" coordinate frame and
+// a nav_msgs/Odometry message, we need to include the relevant header files.
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
+
+int main(int argc, char** argv){
+  ros::init(argc, argv, "odometry_publisher");
+
+  ros::NodeHandle n;
+// Create both a ros::Publisher and a tf::TransformBroadcaster to be able to send messages out using ROS
+// and tf respectively.
+  ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
+  tf::TransformBroadcaster odom_broadcaster;
+// Assume that the robot starts at the origin of the "odom" coordinate frame initially.
+  double x = 0.0;
+  double y = 0.0;
+  double th = 0.0;
+// Set some velocities that will cause the "base_link" frame to move in the "odom" frame at a rate of
+// 0.1m/s in the x direction, -0.1m/s in the y direction, and 0.1rad/s in the th direction.
+// This will more or less cause our fake robot to drive in a circle.
+  double vx = 0.1;
+  double vy = -0.1;
+  double vth = 0.1;
+
+  ros::Time current_time, last_time;
+  current_time = ros::Time::now();
+  last_time = ros::Time::now();
+// Publish odometry information at a rate of 1Hz in this example to make introspection easy, most systems
+// will want to publish odometry at a much higher rate.
+  ros::Rate r(1.0);
+  while(n.ok()){
+
+    ros::spinOnce();               // check for incoming messages
+    current_time = ros::Time::now();
+// Update our odometry information based on the constant velocities we set. A real odometry system would,
+// of course, integrate computed velocities instead.
+    //compute odometry in a typical way given the velocities of the robot
+    double dt = (current_time - last_time).toSec();
+    double delta_x = (vx * cos(th) - vy * sin(th)) * dt;
+    double delta_y = (vx * sin(th) + vy * cos(th)) * dt;
+    double delta_th = vth * dt;
+
+    x += delta_x;
+    y += delta_y;
+    th += delta_th;
+// Try to use 3D versions of all messages in our system to allow 2D and 3D components to work together
+// when appropriate, and to keep the number of messages we have to create to a minimum. As such,
+// it is necessary to convert our yaw value for odometry into a Quaternion to send over the wire.
+// Fortunately, tf provides functions allowing easy creation of Quaternions from yaw values and easy
+// access to yaw values from Quaternions.
+    //since all odometry is 6DOF we'll need a quaternion created from yaw
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);
+// Create a TransformStamped message that we will send out over tf. We want to publish the transform from
+// the "odom" frame to the "base_link" frame at current_time. Therefore, we'll set the header of
+// the message and the child_frame_id accordingly, making sure to use "odom" as the parent coordinate
+// frame and "base_link" as the child coordinate frame.
+    //first, we'll publish the transform over tf
+    geometry_msgs::TransformStamped odom_trans;
+    odom_trans.header.stamp = current_time;
+    odom_trans.header.frame_id = "odom";
+    odom_trans.child_frame_id = "base_link";
+// Fill in the transform message from our odometry data, and then send the transform using our TransformBroadcaster.
+    odom_trans.transform.translation.x = x;
+    odom_trans.transform.translation.y = y;
+    odom_trans.transform.translation.z = 0.0;
+    odom_trans.transform.rotation = odom_quat;
+
+    //send the transform
+    odom_broadcaster.sendTransform(odom_trans);
+// Need to publish a nav_msgs/Odometry message so that the navigation stack can get velocity information
+// from it. Set the header of the message to the current_time and the "odom" coordinate frame.
+    //next, we'll publish the odometry message over ROS
+    nav_msgs::Odometry odom;
+    odom.header.stamp = current_time;
+    odom.header.frame_id = "odom";
+// Populates the message with odometry data and sends it out over the wire. We'll set the child_frame_id
+// of the message to be the "base_link" frame since that's the coordinate frame we're sending our velocity
+// information in.
+    //set the position
+    odom.pose.pose.position.x = x;
+    odom.pose.pose.position.y = y;
+    odom.pose.pose.position.z = 0.0;
+    odom.pose.pose.orientation = odom_quat;
+
+    //set the velocity
+    odom.child_frame_id = "base_link";
+    odom.twist.twist.linear.x = vx;
+    odom.twist.twist.linear.y = vy;
+    odom.twist.twist.angular.z = vth;
+
+    //publish the message
+    odom_pub.publish(odom);
+
+    last_time = current_time;
+    r.sleep();
+  }
+}
+]
+
+
+
+Base Controller (base controller)
+
+
+The navigation stack assumes that it can send velocity commands using a geometry_msgs/Twist message assumed to be in the base coordinate frame of the robot on the "cmd_vel" topic. This means there must be a node subscribing to the "cmd_vel" topic that is capable of taking (vx, vy, vtheta) <==> (cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z) velocities and converting them into motor commands to send to a mobile base. 
+
+
+
+Mapping
+
+
+The navigation stack does not require a map to operate, but for the purposes of this tutorial, we'll assume you have one. Building a map tutorial for details on creating a map of your environment: http://wiki.ros.org/slam_gmapping/Tutorials/MappingFromLoggedData
+
+Building a map
+If working from a source checkout (as opposed to a binary installation), build gmapping:
+rosmake gmapping
+
+Downloading a test bag
+Download a bag file to test with here http://wiki.ros.org/slam_gmapping/Tutorials/MappingFromLoggedData?action=AttachFile&do=view&target=basic_localization_stage.bag
+
+Making your own bag
+Bring up robot, with laser scans and transform data published, and joystick teleoperation enabled (details will vary from robot to robot).
+
+Start recording scans and transforms (note that the scan topic may vary from robot to robot):
+rosbag record -O mylaserdata /base_scan /tf
+This will start writing a file in the current directory called 'mylaserdata_<DATE>-topic.bag.
+
+Drive the robot around. General advice:
+- Try to limit fast rotations, as they are hardest on the scan-matcher. It helps to lower the maximum allowed velocity from the joystick.
+- Visualize what the robot "sees" with its laser; if the laser can't see it, it won't be in the map.
+- People walking around don't usually present a problem, unless they walk along with the robot, in view of its laser.
+- Loop closure is the hardest part; when closing a loop, be sure to drive another 5-10 meters to get plenty of overlap between the start and end of the loop.
+
+Kill the rosbag instance, and note the name of the file that was created.
+
+
+Bring up the master:
+roscore
+
+Make sure that use_sim_time is set to true before any nodes are started:
+rosparam set use_sim_time true
+
+Bring up slam_gmapping, which will take in laser scans (in this case, on the base_scan topic) and produce a map:
+rosrun gmapping slam_gmapping scan:=base_scan
+"base_scan" or just "scan"
+if robot not move
+rosrun gmapping slam_gmapping scan:=base_scan _linearUpdate:=0.0 _angularUpdate:=0.0
+
+Note: On the PR2, the odom frame is named odom_combined. Use the command:
+rosrun gmapping slam_gmapping scan:=base_scan _odom_frame:=odom_combined
+
+New terminal, start playing back the bag file to feed data to slam_gmapping:
+rosbag play --clock <name of the bag that you downloaded / created in step 2>
+
+Wait for rosbag to finish and exit.
+
+Save your new map to disk using map_saver from the map_server package:
+rosrun map_server map_saver -f <map_name>
+
+Now have a map, saved locally as map.pgm. View it with any image viewer (gimp, eog, gthumb, etc.).
+
+Variation: watching the mapping progress
+If don't care to wait until the log playback and mapping process has finished before seeing some results, then watch the progress in rviz.
+- osrun rviz rviz
+- Add a display with a map, set to the topic /map
+
+
+
+
+Navigation Stack Setup
+
+
+Assumes that all the requirements above for robot setup have been satisfied. Specifically, this means that the robot must be publishing coordinate frame information using tf, receiving sensor_msgs/LaserScan or sensor_msgs/PointCloud messages from all sensors that are to be used with the navigation stack, and publishing odometry information using both tf and the nav_msgs/Odometry message while also taking in velocity commands to send to the base.
+
+Creating a Package
+Pick a location for your package and run the following command:
+catkin_create_pkg my_robot_name_2dnav move_base my_tf_configuration_dep my_odom_configuration_dep my_sensor_configuration_dep
+This command will create a package with the necessary dependencies to run the navigation stack on your robot.
+
+Creating a Robot Configuration Launch File
+Create a roslaunch file that brings up all the hardware and transform publishes that the robot needs.
+my_robot_configuration.launch:
+
+<launch>
+Bring up any sensors that the robot will use for navigation. Replace "sensor_node_pkg" with the name of the package for the ROS driver for your sensor, "sensor_node_type" with the type of the driver for your sensor, "sensor_node_name" with the desired name for your sensor node, and "sensor_param" with any parameters that your node might take. Note that if you have multiple sensors that you intend to use to send information to the navigation stack, you should launch all of them here.
+
+   <node pkg="sensor_node_pkg" type="sensor_node_type" name="sensor_node_name" output="screen">
+    <param name="sensor_param" value="param_value" />
+ </node>
+ 
+Launch the odometry for the base. Once again, you'll need to replace the pkg, type, name, and param specifications with those relevant to the node that you're actually launching.
+
+ <node pkg="odom_node_pkg" type="odom_node_type" name="odom_node" output="screen">
+    <param name="odom_param" value="param_value" />
+ </node>
+
+Launch the transform configuration for the robot. Once again, you'll need to replace the pkg, type, name, and param specifications with those relevant to the node that you're actually launching.
+
+ <node pkg="transform_configuration_pkg" type="transform_configuration_type" name="transform_configuration_name" output="screen">
+    <param name="transform_configuration_param" value="param_value" />
+ </node>
+
+</launch> 
+
+Costmap Configuration (local_costmap) & (global_costmap)
+
+The navigation stack uses two costmaps to store information about obstacles in the world. One costmap is used for global planning, meaning creating long-term plans over the entire environment, and the other is used for local planning and obstacle avoidance. There are some configuration options that we'd like both costmaps to follow, and some that we'd like to set on each map individually. Therefore, there are three sections below for costmap configuration: common configuration options, global configuration options, and local configuration options.
+
+Note: The following sections cover only basic configuration options for the costmap. 
+
+Common Configuration (local_costmap) & (global_costmap)
+The navigation stack uses costmaps to store information about obstacles in the world. In order to do this properly, we'll need to point the costmaps at the sensor topics they should listen to for updates. Let's create a file called costmap_common_params.yaml as shown below and fill it in:
+
+[
+// Parameters set thresholds on obstacle information put into the costmap. The "obstacle_range" parameter
+// determines the maximum range sensor reading that will result in an obstacle being put into the costmap.
+// Here, we have it set at 2.5 meters, which means that the robot will only update its map with information
+// about obstacles that are within 2.5 meters of the base. The "raytrace_range" parameter determines the
+// range to which we will raytrace freespace given a sensor reading. Setting it to 3.0 meters means that
+// the robot will attempt to clear out space in front of it up to 3.0 meters away given a sensor reading.
+obstacle_range: 2.5
+raytrace_range: 3.0
+
+// Either the footprint of the robot or the radius of the robot if it is circular.
+// In the case of specifying the footprint, the center of the robot is assumed to be at (0.0, 0.0) and both
+// clockwise and counterclockwise specifications are supported. We'll also set the inflation radius for
+// the costmap. The inflation radius should be set to the maximum distance from obstacles at which a cost
+// should be incurred. For example, setting the inflation radius at 0.55 meters means that the robot will
+// treat all paths that stay 0.55 meters or more away from obstacles as having equal obstacle cost.
+footprint: [[x0, y0], [x1, y1], ... [xn, yn]]
+#robot_radius: ir_of_robot
+inflation_radius: 0.55
+
+// "observation_sources" parameter defines a list of sensors that are going to be passing information to
+// the costmap separated by spaces. Each sensor is defined in the next lines.
+observation_sources: laser_scan_sensor point_cloud_sensor
+
+// Sets parameters on a sensor mentioned in observation_sources, and this example defines laser_scan_sensor
+// as an example. The "frame_name" parameter should be set to the name of the coordinate frame of
+// the sensor, the "data_type" parameter should be set to LaserScan or PointCloud depending on which
+// message the topic uses, and the "topic_name" should be set to the name of the topic that the sensor
+// publishes data on. The "marking" and "clearing" parameters determine whether the sensor will be used to
+// add obstacle information to the costmap, clear obstacle information from the costmap, or do both.
+laser_scan_sensor: {sensor_frame: frame_name, data_type: LaserScan, topic: topic_name, marking: true, clearing: true}
+
+point_cloud_sensor: {sensor_frame: frame_name, data_type: PointCloud, topic: topic_name, marking: true, clearing: true}
+
+]
+
+Global Configuration (global_costmap)
+
+Create a file below that will store configuration options specific to the global costmap. Open up an editor with the file global_costmap_params.yaml and paste in the following text:
+
+"global_frame" parameter defines what coordinate frame the costmap should run in, in this case, we'll choose the /map frame. The "robot_base_frame" parameter defines the coordinate frame the costmap should reference for the base of the robot. The "update_frequency" parameter determines the frequency, in Hz, at which the costmap will run its update loop. The "static_map" parameter determines whether or not the costmap should initialize itself based on a map served by the map_server. If you aren't using an existing map or map server, set the static_map parameter to false.
+
+global_costmap:
+  global_frame: /map
+  robot_base_frame: base_link
+  update_frequency: 5.0
+  static_map: true
+
+Full Configuration Options
+
+This minimum configuration should get things up and running, but for more details on the configuration options available for the costmap: http://wiki.ros.org/costmap_2d
+
+
+Base Local Planner Configuration
+
+The base_local_planner is responsible for computing velocity commands to send to the mobile base of the robot given a high-level plan. We'll need to set some configuration options based on the specs of our robot to get things up and running. Open up a file called base_local_planner_params.yaml and paste the following text into it:
+
+Note: This section covers only basic configuration options for the TrajectoryPlanner.
+[
+
+// Define the velocity limits of the robot. The second section defines the acceleration limits of robot.
+rajectoryPlannerROS:
+  max_vel_x: 0.45
+  min_vel_x: 0.1
+  max_vel_theta: 1.0
+  min_in_place_vel_theta: 0.4
+
+  acc_lim_theta: 3.2
+  acc_lim_x: 2.5
+  acc_lim_y: 2.5
+
+  holonomic_robot: true
+
+
+Creating a Launch File for the Navigation Stack
+
+All of our configuration files in place, we'll need to bring everything together into a launch file for the navigation stack. Open up an editor with the file move_base.launch and paste the following text into it:
+
+Only changes that you should need to make to this file are to change the map server to point to a map you've created and to change "amcl_omni.launch" to "amcl_diff.launch" if you have a differential drive robot. For a tutorial on creating a map, please see the building a map.
+
+<launch>
+
+   <master auto="start"/>
+ <!-- Run the map server --> 
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find my_map_package)/my_map.pgm my_map_resolution"/>
+
+ <!--- Run AMCL --> 
+    <include file="$(find amcl)/examples/amcl_omni.launch" />
+
+   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find my_robot_name_2dnav)/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+    <rosparam file="$(find my_robot_name_2dnav)/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find my_robot_name_2dnav)/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find my_robot_name_2dnav)/global_costmap_params.yaml" command="load" /> 
+    <rosparam file="$(find my_robot_name_2dnav)/base_local_planner_params.yaml" command="load" />
+ </node>
+
+</launch> 
+
+
+AMCL Configuration (amcl)
+AMCL has many configuration options that will affect the performance of localization: http://wiki.ros.org/amcl (if needed)
+
+
+Running the Navigation Stack
+
+Everything set up, we can run the navigation stack. To do this we'll need two terminals on the robot. In one terminal, we'll launch the my_robot_configuration.launch file and in the other we'll launch the move_base.launch file that we just created.
+
+Terminal 1:
+roslaunch my_robot_configuration.launch
+
+Terminal 2:
+roslaunch move_base.launch
+
+Navigation stack should now be running. For information on sending goals to the navigation stack through a graphical interface: http://wiki.ros.org/navigation/Tutorials/Using%20rviz%20with%20the%20Navigation%20Stack
+Setting Up rviz for the Navigation Stack https://youtu.be/0CsSok3QgZk
+
+ 
+Navigation stack using code Sending Simple Navigation Goals tutorial: http://wiki.ros.org/navigation/Tutorials/SendingSimpleGoals =>
+
+Some ROS Setup
+
+Create a ROS node that sends goals to the navigation stack, first create a package. Command create the package directory with a dependency on the move_base_msgs, actionlib, and roscpp packages as shown below:
+
+catkin_create_pkg simple_navigation_goals move_base_msgs actionlib roscpp
+
+After this roscd to the package created, using it as our workspace
+
+roscd simple_navigation_goals
+
+
+Creating the Node
+
+Write the code that will send goals to the base. Edit src/simple_navigation_goals.cpp. 
+
+#include <ros/ros.h>
+// includes the action specification for move_base which is a ROS action that exposes a high level
+// interface to the navigation stack. Essentially, the move_base action accepts goals from clients
+// and attempts to move the robot to the specified position/orientation in the world
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+
+// Creates a convenience typedef for a SimpleActionClient that will allow us to communicate with
+// actions that adhere to the MoveBaseAction action interface.
+typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
+
+int main(int argc, char** argv){
+  ros::init(argc, argv, "simple_navigation_goals");
+
+// Constructs an action client that we'll use to communicate with the action named "move_base" that
+// adheres to the MoveBaseAction interface. It also tells the action client to start a thread to call
+// ros::spin() so that ROS callbacks will be processed by passing "true" as the second argument of
+// the MoveBaseClient constructor.
+  //tell the action client that we want to spin a thread by default
+  MoveBaseClient ac("move_base", true);
+
+
+// Wait for the action server to report that it has come up and is ready to begin processing goals.
+  //wait for the action server to come up
+  while(!ac.waitForServer(ros::Duration(5.0))){
+    ROS_INFO("Waiting for the move_base action server to come up");
+  }
+
+
+// Create a goal to send to move_base using the move_base_msgs::MoveBaseGoal message type which is
+// included automatically with the MoveBaseAction.h header. Tell the base to move 1 meter forward in
+// the "base_link" coordinate frame. The call to ac.sendGoal will actually push the goal out over the
+// wire to the move_base node for processing.
+  move_base_msgs::MoveBaseGoal goal;
+
+  //we'll send a goal to the robot to move 1 meter forward
+  goal.target_pose.header.frame_id = "base_link";
+  goal.target_pose.header.stamp = ros::Time::now();
+
+  goal.target_pose.pose.position.x = 1.0;
+  goal.target_pose.pose.orientation.w = 1.0;
+
+  ROS_INFO("Sending goal");
+  ac.sendGoal(goal);
+
+
+// Wait for the goal to finish using the ac.waitForGoalToFinish call which will block until the
+// move_base action is done processing the goal we sent it. After it finishes, we can check if
+// the goal succeded or failed and output a message to the user accordingly.
+  ac.waitForResult();
+
+  if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    ROS_INFO("Hooray, the base moved 1 meter forward");
+  else
+    ROS_INFO("The base failed to move forward 1 meter for some reason");
+
+  return 0;
+}
+
+
+Building and Running
+
+We have a package and a source file, to build and then try things out. The first step will be to add our src/simple_navigation_goals.cpp file to our CMakeLists.txt file to get it to build. Open up CMakeLists.txt in your editor of choice and add the following line to the bottom of the file.
+
+add_executable(simple_navigation_goals src/simple_navigation_goals.cpp)
+target_link_libraries(simple_navigation_goals ${catkin_LIBRARIES})
+
+Once this is done, we can build our executable by typing make.
+
+catkin_make
+
+Ready to run. At this point, we'll assume that the navigation stack has been brought up according to one of the tutorials listed above. One important thing to check is that the name of the action, we've assumed "move_base" in this tutorial, matches the name used in your code. To check this, we'll execute the following rostopic command:
+
+rostopic list | grep move_base/goal
+
+If something shows up, then good to go. Otherwise, need to find the name of the action that the navigation stack is using, a common alternative on the PR2 platform is "move_base_local," and update all references in the src/simple_navigation_goals.cpp file accordingly.
+
+After this, its as simple as running the executable we created.
+
+./bin/simple_navigation_goals
+
+And, if all goes well, the robot should begin to move a meter forward.
+
+
+
+rosserial
+http://wiki.ros.org/rosserial_python
+The rosserial_python package contains a Python implementation of the host-side rosserial connection. It automatically handles setup, publishing, and subscribing for a connected rosserial-enabled device.
+
+
+Note that you need to install pyserial for this to work (try pip install pyserial).
+
+Nodes
+
+serial_node.py
+Interface to a rosserial-enabled device. This node automatically spins up subscribers and publishers based on the configuration information stored in the device.
+Parameters
+~port (str, default: /dev/ttyUSB0)
+Name of port to use.
+~baud (int, default: 57600)
+Baud rate, in bps.
+
+Examples
+To run the node with a different port and baud rate, for example on /dev/ttyACM1, you must specify the ~port and ~baud parameters on the command line:
+
+rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1 _baud:=115200
+You can also specify these parameters as part of your launch file:
+[
+<launch>
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+    <param name="port" value="/dev/ttyACM1"/>
+    <param name="baud" value="115200"/>
+  </node>
+</launch>
+]
+list serial port:
+http://wiki.ros.org/rosserial_python
+
+Jetson nano j41 uart1 = ttyTHS1 and uart2 = ttyTHS2

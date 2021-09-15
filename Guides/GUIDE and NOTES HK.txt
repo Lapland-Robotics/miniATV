@@ -1,0 +1,80 @@
+Installation:
+
+
+
+
+ERRORS:
+
+If some:
+ERROR: cannot launch node of type [map_server/map_server]: map_server
+than:
+sudo apt-get install ros-melodic-map-server
+
+If some:
+***Failed to create the global_planner/GlobalPlanner********
+then:
+sudo apt-get install ros-melodic-global-planner
+
+if some:
+ImportError: No module named ackermann_msgs.msg
+than:
+sudo apt-get install ros-melodic-ackermann-msgs
+
+Vitz:
+
+Disable DISABLE MARKERS IN RVITZ! with teb_local_planner
+
+run:
+roscore
+
+killall -9 roscore
+
+killall -9 rosmaster
+
+Simulation
+rosparam set /test_optim_node/enable_homotopy_class_planning False
+or
+rosparam set /test_optim_node/enable_homotopy_class_planning True
+DISABLE MARKERS IN RVITZ!
+
+Change Parameters:
+rosrun rqt_reconfigure rqt_reconfigure
+
+View Nodes Topics.....:
+rosrun rqt_graph rqt_graph
+
+View ft Tree:
+rosrun rqt_tf_tree rqt_tf_tree
+
+View Topics:
+rostopic list
+
+Echo topics (example "odom"):
+rostopic echo /odom
+
+
+rostopic echo /odom/pose/pose/position
+
+Run tf
+First terminal, run a core.
+roscore
+
+Second terminal, we'll run our tf_broadcaster
+rosrun robot_setup_tf tf_broadcaster
+
+Third terminal to run our tf_listener to transform our mock point from the "base_laser" frame to the "base_link" frame.
+rosrun robot_setup_tf tf_listener
+
+If all goes well, you should see the output showing a point being transformed from the "base_laser" frame to the "base_link" frame once a second.
+
+
+ROS REMOTE
+Terminal 1
+export ROS_MASTER_URI=http://192.168.0.13:11311
+export ROS_IP=192.168.0.13
+roslaunch atv_setup atv.launch
+
+Terminal 2
+export ROS_MASTER_URI=http://192.168.0.13:11311
+export ROS_IP=192.168.0.13
+roslaunch atv_setup atv.launch

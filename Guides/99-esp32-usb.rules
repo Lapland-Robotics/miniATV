@@ -1,0 +1,2 @@
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="de17961fd074ea1196b5d944cf25bb41", SYMLINK+="ATV_Interface_Port"
+

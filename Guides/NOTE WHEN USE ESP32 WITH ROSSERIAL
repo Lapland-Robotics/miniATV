@@ -1,0 +1,82 @@
+NOTE! AFTER 3 WASTED DAY!
+
+If Arduino IDE ROS libraries used you will get:
+[
+Rebooting...
+ets Jun  8 2016 00:22:57
+
+rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1216
+ho 0 tail 12 room 4
+load:0x40078000,len:10944
+load:0x40080400,len:6388
+entry 0x400806b4
+assertion "Invalid mbox" failed: file "/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/tcpip.c", line 374, function: tcpip_send_msg_wait_sem
+abort() was called at PC 0x400d49c7 on core 1
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x40084cb4:0x3ffb1de0 0x40084f31:0x3ffb1e00 0x400d49c7:0x3ffb1e20 0x400e44b3:0x3ffb1e50 0x400e3f4d:0x3ffb1e80 0x400e4100:0x3ffb1ea0 0x400e7654:0x3ffb1ee0 0x400d2632:0x3ffb1f00 0x400d2032:0x3ffb1f50 0x400d1b6b:0x3ffb1f80 0x400d2efa:0x3ffb1fb0 0x40085f32:0x3ffb1fd0
+]
+
+
+HOW TO AVOID THIS:
+Thank you LorenzF in https://github.com/espressif/arduino-esp32/issues/4807
+
+On Arduino Ros library ros_lib there is ros.h .
+
+Replace or comment this:
+#if defined(ESP8266) or defined(ESP32) or defined(ROSSERIAL_ARDUINO_TCP)
+  #include "ArduinoTcpHardware.h"
+#else
+  #include "ArduinoHardware.h"
+#endif
+with this:
+#if defined(ROSSERIAL_ARDUINO_TCP)
+  #include "ArduinoTcpHardware.h"
+#else
+  #include "ArduinoHardware.h"
+#endif
+
+
+CHANGE ROSSERIAL BAUD RATE
+You have to change parameters in ArduinoHardware.h in ros_lib.
+
+
+HW Timer
+#include "ESP32TimerInterrupt.h"
+
+
+Jetson Nano UART: (THIS WONT WORK, BECAUSE JETSON NANO)
+Before You Start
+The stock Jetson Nano starts a console on the ttyTHS1 serial port at startup through a service. The script that starts the service is nvgetty.sh which launches getty. The script is located in /etc/systemd. While this does not conflict with the script presented here, consider disabling the console if you are using the serial port to avoid conflicts. Note that normal udev rules will be overridden by the console while the service is running. To disable the console:
+$ systemctl stop nvgetty
+$ systemctl disable nvgetty
+$ udevadm trigger
+# You may want to reboot instead
+
+
+SET/REVERSE UNIQUE NAME FOR USB DEVICES:
+Find out what's on ttyUSB: 
+
+dmesg | grep ttyUSB  
+List all attributes of the device:
+
+udevadm info --name=/dev/ttyUSBx --attribute-walk
+(with your device number(s) instead of x, of course). Pick out a unique identifier set, eg idVendor + idProduct. You may also need SerialNumber if you have more than one device with the same idVendor and idProduct. SerialNumbers ought to be unique for each device.
+
+Create a file /etc/udev/rules.d/99-usb-serial.rules with something like this line in it:
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1234", ATTRS{idProduct}=="5678", SYMLINK+="your_device_name" 
+assuming you don't need a serial number there, and of course with the numbers for idVendor and idProduct that you found in step 2.
+
+Load the new rule:
+sudo udevadm trigger
+
+Verify what happened:
+ls -l /dev/your_device_name  
+will show what ttyUSB number the symlink went to. If it's /dev/ttyUSB1, then verify who owns that and to which group it belongs:
+ls -l /dev/ttyUSB1   

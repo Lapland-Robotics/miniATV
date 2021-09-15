@@ -1,0 +1,170 @@
+INSTALLATION
+http://wiki.ros.org/melodic/Installation/Ubuntu
+
+Configure your Ubuntu repositories
+https://help.ubuntu.com/community/Repositories/Ubuntu
+
+Setup your computer to accept software from packages.ros.org.
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+
+Set up your keys
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+
+
+Installation
+First, make sure your Debian package index is up-to-date:
+sudo apt update
+(
+sudo apt update        # Fetches the list of available updates
+sudo apt upgrade       # Installs some updates; does not remove packages
+sudo apt full-upgrade  # Installs updates; may also remove some packages, if needed
+sudo apt autoremove    # Removes any old packages that are no longer needed
+)
+
+Desktop-Full Install: (Recommended) : ROS, rqt, rviz, robot-generic libraries, 2D/3D simulators and 2D/3D perception
+sudo apt install ros-melodic-desktop-full
+
+Desktop Install: ROS, rqt, rviz, and robot-generic libraries
+sudo apt install ros-melodic-desktop
+
+ROS-Base: (Bare Bones) ROS package, build, and communication libraries. No GUI tools.
+sudo apt install ros-melodic-ros-base
+
+It's convenient if the ROS environment variables are automatically added to your bash session every time a new shell is launched:
+echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+
+To install this tool and other dependencies for building ROS packages, run:
+sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+
+Initialize rosdep
+sudo apt install python-rosdep
+sudo rosdep init
+rosdep update
+
+AFTER INSTALLATION
+http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment
+
+Check environment variables
+printenv | grep ROS
+
+If you just installed ROS from apt on Ubuntu then you will have setup.*sh files in '/opt/ros/<distro>/', and you could source them like so:
+source /opt/ros/<distro>/setup.bash
+Using the short name of your ROS distribution instead of <distro>
+If you installed ROS Melodic, that would be:
+source /opt/ros/melodic/setup.bash
+(You will need to run this command on every new shell you open to have access to the ROS commands, unless you add this line to your .bashrc. This process allows you to install several ROS distributions (e.g. indigo and kinetic) on the same computer and switch between them.)
+
+
+Let's create and build a catkin workspace:
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/
+catkin_make
+(The catkin_make command is a convenience tool for working with catkin workspaces. Running it the first time in your workspace, it will create a CMakeLists.txt link in your 'src' folder.)
+
+[Python 3 users in ROS Melodic and earlier: note, if you are building ROS from source to achieve Python 3 compatibility, and have setup your system appropriately (ie: have the Python 3 versions of all the required ROS Python packages installed, such as catkin) the first catkin_make command in a clean catkin workspace must be:
+catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3
+
+This will configure catkin_make with Python 3. You may then proceed to use just catkin_make for subsequent builds.
+]
+
+Before continuing source your new setup.*sh file:
+source devel/setup.bash
+
+To make sure your workspace is properly overlayed by the setup script, make sure ROS_PACKAGE_PATH environment variable includes the directory you're in.
+echo $ROS_PACKAGE_PATH
+"/home/youruser/catkin_ws/src:/opt/ros/kinetic/share"
+
+
+YOU CAN ADD NEXT LINES TO END OF ~/.bashrc. SO YOU DON'T NEED TO SOURCE IN FUTURE
+(if add than ignore guides to "source")
+source /opt/ros/melodic/setup.bash
+source ~/catkin_ws/devel/setup.bash
+
+
+NOTE! SOME REASON ros FULL IS NOT FULL INSTALLATION. OR I'M JUST NOOB.
+YOU HAVE TO INSTALL SEVERAL PACKAGES AT TIME WHEN YOU NEED THEM (map_server, rosserial etc...).
+Example:
+If some:
+ERROR: cannot launch node of type [map_server/map_server]: map_server
+than:
+sudo apt-get install ros-melodic-map-server
+NOTE! MISSING "map_server", BUT INSTALLATION PACKAGE IS "map-server"
+
+ADDITIONAL INSTALLATION FOR "rosserial" and "rosserial for arduino"
+sudo apt-get install ros-melodic-rosserial-arduino
+sudo apt-get install ros-melodic-rosserial
+
+Install ros_lib into the Arduino Environment
+The preceding installation steps created the necessary libraries, now the following will create the ros_lib folder that the Arduino build environment needs to enable Arduino programs to interact with ROS.
+In the steps below, <sketchbook> is the directory where the Linux Arduino environment saves your sketches. Typically this is a directory called sketchbook or Arduino in your home directory. e.g cd ~/Arduino/libraries
+Ros_lib installation instructions are different for groovy source (catkin) than for earlier (rosbuild) or binary releases. Be sure you've selected the correct build system - catkin for a groovy source build, rosbuild otherwise.
+Note: you have to delete libraries/ros_lib, if present, in order to regenerate as its existence causes an error. "rosrun rosserial_arduino make_libraries.py" creates the ros_lib directory.
+
+  cd <sketchbook>/libraries
+  rm -rf ros_lib
+  rosrun rosserial_arduino make_libraries.py ros_lib
+
+*Note: Currently you can install the Arduino libaries directly in the Arduino IDE. Just open the Library Manager from the IDE menu in Sketch -> Include Library -> Manage Library. Then search for "rosserial". This is useful if you need to work on an Arduino sketch but don't want to setup a full ROS workstation.
+
+
+
+TEB_LOCAL_PLANNER
+http://wiki.ros.org/teb_local_planner/Tutorials/Setup%20and%20test%20Optimization
+
+Install the teb_local_planner package from the official ROS repositories.
+sudo apt-get install ros-melodic-teb-local-planner
+
+If you build the package from source, make sure to install the dependencies first:
+rosdep install teb_local_planner
+
+Supplementary material for the following tutorials is available in the teb_local_planner_tutorials package.
+Check it out from source in order to inspect the files and easily change parameters:
+[
+cd ~/catkin_ws/src
+git clone https://github.com/rst-tu-dortmund/teb_local_planner_tutorials.git
+# IF ROS NOT INSTALLED install dependencies, e.g.
+sudo apt-get install ros-melodic-stage-ros
+]
+or install the examples from the official repositories if you just want to run the scripts:
+sudo apt-get install ros-melodic-teb-local-planner-tutorials
+
+
+The package includes a simple test node (test_optim_node) that optimizes a trajectory between a fixed start and goal pose. We first start configuring the planning of a single trajectory (Timed-Elastic-Band) between start and goal, afterwards we will activate and set up the planning in distinctive topologies.
+
+Optimization of a single Trajectory
+Deactivate parallel planning using the ROS parameter server (make sure to have a roscore running, if not than New Terminal and "roscore"):
+rosparam set /test_optim_node/enable_homotopy_class_planning False
+
+Launch test_optim_node in combination with the preconfigured rviz node for visualization:
+roslaunch teb_local_planner test_optim_node.launch
+A new rviz window should open
+Three point obstacles are included. They are represented as an interactive_markers type and therefore the obstacle configuration can be changed by clicking and holding the blue circle around each individual obstacle.
+
+Since the Timed-Elastic-Band utilizes a local optimization scheme, the trajectory cannot transit across obstacles. This issue is addressed in the subsequent section.
+But first we customize our optimization by running rqt_reconfigure:
+rosrun rqt_reconfigure rqt_reconfigure
+
+Try to customize the optimization according to your desires. But modify the parameters only slightly, since some parameter sets could lead to undesired convergence behavior or a bad performance (especially by changing the optimization parameters).
+
+If you experience a bad performance on your system even with the default setting, try to adjust the following parameters in order to speed-up the optimization:
+-Decrease no_inner_iterations
+-Decrease no_outer_iterations
+-Increase dt_ref
+-Decrease obstacle_poses_affected
+
+THIS WILL CRASH IN JETSON NANO WITH DEFAULT SETTINGS! DISABLE MARKERS IN RVITZ!
+We now address the problem of local optimization schemes and enable the parallel planning in distinctive topologies. This extended planner is enabled by default and requires more computational resources.
+Restart roscore or reactivate the extended planner:
+rosparam set /test_optim_node/enable_homotopy_class_planning True
+
+Launch test_optim_node in combination with the preconfigured rviz node for visualization:
+roslaunch teb_local_planner test_optim_node.launch
+A new rviz window should open
+
+As in the first section, all obstacles can now be moved using the computer mouse. The currently best trajectory (in sense of cheapest optimization cost) is highlighted by showing the individual poses (as red arrows) at each trajectory configuration.
+Change the obstacle configuration and observe what's happening:
+
+Again customize the optimization by running rqt_reconfigure:
+rosrun rqt_reconfigure rqt_reconfigure
+There exist a separate parameter section for parallel planning in distinctive topologies. Adjust the parameters according to your desires.

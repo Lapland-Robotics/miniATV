@@ -1,0 +1,13 @@
+WHERE NEWEST/MOST RECENT FILES ARE:
+
+linux machine "ATV" = ros robot and here it is nVidia Jetson nano
+linux machine "ATVcontrol" = remote control PC to launch robot, command and visualize robot with rviz
+windows PC = archive robot hardware documentation (Fusion 360 and Mentro graphics Pads)
+
+FILES and FOLDERS
+-ros documentation and guides: ATV and ATVcontrol (hom/desktop)
+-catkink_ws/atv_setup (robot ros files): ATV
+-maps: ATV (catkin_ws/src/atv_setup/maps)(navigation) and ATVcontrol (catkin_ws/src/atv_control/maps)(visualization)
+-ESP32 code: which you use for programming ESP, here it is ATVcontrol
+-remote launch sh bash files: ATVcontrol (/home) and ATV.desktop launch file /usr/share/application (ATVicon.svg in /home folder)
+
