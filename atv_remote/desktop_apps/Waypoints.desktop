@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=/home/hk/run_waypoints_pub_remote.sh
+Name=WaypointsRemote
+Icon=/home/hk/waypoints_icon.svg
+

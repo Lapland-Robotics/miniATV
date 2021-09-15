@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=/home/hk/run_atv_robot_remote1.sh
+Name=ATVremote
+Icon=/home/hk/ATVicon.svg
+
