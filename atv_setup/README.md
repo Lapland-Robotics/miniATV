@@ -1,5 +1,9 @@
 # This is miniATV Robot
 
+## At the moment
+- nVidia Jetson Nano (JetPack 4.5) with RPLidar
+- ROS Melodic and teb_local_planner (AMCL) on remote launch...
+
 ## devrules
 ## dialout group
 Add your username to dialout group so you don't need chmod every ttyUSBx port...
