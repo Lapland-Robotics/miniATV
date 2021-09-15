@@ -12,7 +12,7 @@ $ udevadm info --name=/dev/ttyUSBx --attribute-walk # USBx = where ESP32 is conn
 ### Rename RPLidar USB-port:
 Move 99-rplidar-usb.rules to path /etc/udev/rules.d/
 
-### atv_setup ros package:
+## atv_setup ros package:
 Move rest of atv_setup (folder) to yours ROS workspace source folder (assuming here ws is ~/catkin_ws/src).
 ```
 $ cd catkin_ws/src
