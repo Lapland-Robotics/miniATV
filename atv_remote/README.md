@@ -54,6 +54,17 @@ $ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 ```
 
 ## atv_remote ros package (Skip this):
+To install dependencies for building ROS packages, run:
+```
+$ sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+```
+Initialize rosdep:
+```
+$ sudo apt install python-rosdep
+$ sudo rosdep init
+$ rosdep update
+```
+Create atv_remote package
 ```
 $ cd catkin_ws/src
 $ catkin_create_pkg atv_remote
