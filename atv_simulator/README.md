@@ -55,7 +55,7 @@ $ cd ~/catkin_ws
 $ catkin_make
 ```
 
-### Note! If waypoints needed: Clone [Waypoints](https://github.com/Lapland-Robotics/Waypoints).
+# Note! If waypoints needed: Clone [Waypoints](https://github.com/Lapland-Robotics/Waypoints).
 
 ## Launch Simulator
 ```
