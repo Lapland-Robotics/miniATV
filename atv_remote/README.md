@@ -17,8 +17,8 @@ $ sudo apt-get install sshpass
 $ ssh <username>@<x.x.x.x> # x.x.x.x = ip address in  miniATV (atv_setup)
 ```
 3. In "ip_addresses.sh", check IP -addresses, username and password.
-4. Add "ATVremote" launch icon to "Favorites" ("All Softwares" and right click then "Add to Favorites"....)
-5. Add "WaypointsRemote" launch icon to "Favorites" ("All Softwares" and right click then "Add to Favorites"....)
+4. Add "ATVremote" launch icon to "Favorites" ("Softwares" and right click then "Add to Favorites"....)
+5. Add "WaypointsRemote" launch icon to "Favorites" ("Softwares" and right click then "Add Favorites"....)
 
 
 ### ROS Installation (Copy from ros.org)
@@ -53,15 +53,16 @@ Source bash...
 $ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 ```
 
-## atv_remote ros package:
-Move rest of atv_remote (folder) to yours ROS workspace source folder (assuming here ws is ~/catkin_ws/src).
+## atv_remote ros package (Skip this):
 ```
 $ cd catkin_ws/src
 $ catkin_create_pkg atv_remote
+```
+Move rest of atv_remote folder contents to yours atv_remote folder in ROS workspace source folder (assuming here ws is ~/catkin_ws/atv_remote).
+```
 $ cd ~/catkin_ws
 $ catkin_make
 ```
-
 # How to remotely control miniATV....
 
 ### Launch ATV:
