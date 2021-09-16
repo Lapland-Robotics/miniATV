@@ -36,6 +36,17 @@ Source bash...
 ```
 $ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 ```
+To install dependencies for building ROS packages, run:
+```
+$ sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+```
+Initialize rosdep:
+```
+$ sudo apt install python-rosdep
+$ sudo rosdep init
+$ rosdep update
+```
+
 ### teb_local_planner
 [http://wiki.ros.org/teb_local_planner](http://wiki.ros.org/teb_local_planner)
 Install the teb_local_planner package from the official ROS repositories:
