@@ -47,6 +47,17 @@ $ sudo rosdep init
 $ rosdep update
 ```
 
+### Make ROS workspace
+```
+$ mkdir -p ~/catkin_ws/src
+$ cd ~/catkin_ws/
+$ catkin_make
+```
+Source bash...
+```
+$ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+```
+
 ### teb_local_planner
 [http://wiki.ros.org/teb_local_planner](http://wiki.ros.org/teb_local_planner)
 Install the teb_local_planner package from the official ROS repositories:
@@ -64,47 +75,7 @@ teb_local_planner_tutorial use Stage -simulator so:
 $ sudo apt-get install ros-melodic-stage-ros
 ```
 
-### Make ROS workspace
-```
-$ mkdir -p ~/catkin_ws/src
-$ cd ~/catkin_ws/
-$ catkin_make
-```
-Source bash...
-```
-$ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
-```
 
-### NOTE! SOME REASON ros FULL IS NOT FULL INSTALLATION. OR I'M JUST NOOB.
-YOU HAVE TO INSTALL SEVERAL PACKAGES AT TIME WHEN YOU NEED THEM (map_server, rosserial etc...).
-Example
-If some:
-```
-ERROR: cannot launch node of type [map_server/map_server]: map_server
-```
-than:
-```
-sudo apt-get install ros-melodic-map-server
-```
-NOTE! MISSING "map_server", BUT INSTALLATION PACKAGE IS "map-server"
-
-If some:
-```
-***Failed to create the global_planner/GlobalPlanner********
-```
-than:
-```
-sudo apt-get install ros-melodic-global-planner
-```
-
-If some:
-```
-ImportError: No module named ackermann_msgs.msg
-```
-than:
-```
-sudo apt-get install ros-melodic-ackermann-msgs
-```
 
 ### ROS serial for UART (serial-port) communication (here with ESP32)
 ```
@@ -140,10 +111,45 @@ $ udevadm info --name=/dev/ttyUSBx --attribute-walk # USBx = where ESP32 is conn
 Move 99-rplidar-usb.rules to path /etc/udev/rules.d/
 
 ## atv_setup ros package:
-Move rest of atv_setup (folder) to yours ROS workspace source folder (assuming here ws is ~/catkin_ws/src).
+
 ```
 $ cd catkin_ws/src
 $ catkin_create_pkg atv_setup
+```
+Move atv_setup folder contents to yours atv_setup folder in ROS workspace source folder (assuming here ws is ~/catkin_ws/atv_setup).
+```
 $ cd ~/catkin_ws
 $ catkin_make
+```
+
+## Troubleshooter:
+### NOTE! SOME REASON ros FULL IS NOT FULL INSTALLATION. OR I'M JUST NOOB.
+YOU HAVE TO INSTALL SEVERAL PACKAGES AT TIME WHEN YOU NEED THEM (map_server, rosserial etc...).
+Example
+If some:
+```
+ERROR: cannot launch node of type [map_server/map_server]: map_server
+```
+than:
+```
+sudo apt-get install ros-melodic-map-server
+```
+NOTE! MISSING "map_server", BUT INSTALLATION PACKAGE IS "map-server"
+
+If some:
+```
+***Failed to create the global_planner/GlobalPlanner********
+```
+than:
+```
+sudo apt-get install ros-melodic-global-planner
+```
+
+If some:
+```
+ImportError: No module named ackermann_msgs.msg
+```
+than:
+```
+sudo apt-get install ros-melodic-ackermann-msgs
 ```
