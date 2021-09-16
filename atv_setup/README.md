@@ -36,7 +36,7 @@ Source bash...
 ```
 $ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 ```
-To install dependencies for building ROS packages, run:
+### Install dependencies for building ROS packages, run:
 ```
 $ sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
 ```
@@ -110,7 +110,7 @@ $ udevadm info --name=/dev/ttyUSBx --attribute-walk # USBx = where ESP32 is conn
 ### Rename RPLidar USB-port:
 Move 99-rplidar-usb.rules to path /etc/udev/rules.d/
 
-## atv_setup ros package:
+## Create atv_setup ros package:
 
 ```
 $ cd catkin_ws/src
