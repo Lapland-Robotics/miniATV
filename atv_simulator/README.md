@@ -32,6 +32,17 @@ Source bash...
 $ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 ```
 
+### Install dependencies for building ROS packages, run:
+```
+$ sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+```
+Initialize rosdep:
+```
+$ sudo apt install python-rosdep
+$ sudo rosdep init
+$ rosdep update
+```
+
 ### Make ROS workspace
 ```
 $ mkdir -p ~/catkin_ws/src
@@ -43,7 +54,7 @@ Source bash...
 $ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 ```
 
-## atv_simulator ros package:
+## Create atv_simulator ros package:
 
 ```
 $ cd catkin_ws/src
