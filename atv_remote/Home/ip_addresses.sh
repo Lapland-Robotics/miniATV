@@ -6,4 +6,4 @@ readonly robot_IP=172.16.200.200
 readonly this_remote_PC_IP=172.16.200.199
 
 readonly my_username=hk
-readonly hoppop=har306
+readonly hoppop=xxxxxxxxxx #ask from HKblo
