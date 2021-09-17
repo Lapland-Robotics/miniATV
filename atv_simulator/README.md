@@ -38,12 +38,12 @@ $ sudo apt install python-rosdep python-rosinstall python-rosinstall-generator p
 ```
 Initialize rosdep:
 ```
-$ sudo apt install python-rosdep
 $ sudo rosdep init
 $ rosdep update
 ```
 
 ### Make ROS workspace
+Open new Terminal window.
 ```
 $ mkdir -p ~/catkin_ws/src
 $ cd ~/catkin_ws/
