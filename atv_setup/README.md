@@ -28,7 +28,7 @@ $ sudo apt full-upgrade  # Installs updates; may also remove some packages, if n
 $ sudo apt autoremove    # Removes any old packages that are no longer needed
 ```
 
-Desktop-Full Install: (Recommended) : ROS, rqt, rviz, robot-generic libraries, 2D/3D simulators and 2D/3D perception
+ROS Desktop-Full Install: ROS, rqt, rviz, robot-generic libraries, 2D/3D simulators and 2D/3D perception
 ```
 $ sudo apt install ros-melodic-desktop-full
 ```
