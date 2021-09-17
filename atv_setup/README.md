@@ -47,6 +47,7 @@ $ rosdep update
 ```
 
 ### Make ROS workspace
+Open new Terminal window.
 ```
 $ mkdir -p ~/catkin_ws/src
 $ cd ~/catkin_ws/
