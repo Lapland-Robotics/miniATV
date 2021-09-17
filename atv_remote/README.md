@@ -44,7 +44,7 @@ $ sudo apt full-upgrade  # Installs updates; may also remove some packages, if n
 $ sudo apt autoremove    # Removes any old packages that are no longer needed
 ```
 
-Desktop Install: ROS, rqt, rviz, and robot-generic libraries
+ROS Desktop Install: ROS, rqt, rviz, and robot-generic libraries
 ```
 $ sudo apt install ros-melodic-desktop
 ```
