@@ -3,7 +3,7 @@
 ## Home
 Move Home folder content to Home folder!
 
-## desktop_apps(Linux "desktop" -launchs)
+## Launch icon. desktop_apps(Linux "desktop" -launchs)
 Remember edit paths (change username) in *.desktop files.
 Move *.desktops to paht: /usr/share/applications.
 
