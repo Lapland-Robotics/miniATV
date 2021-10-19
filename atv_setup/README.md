@@ -1,7 +1,7 @@
 # This is miniATV Robot
 
 ## At the moment
-- nVidia Jetson Nano (JetPack 4.5) with RPLidar
+- Nvidia Jetson Nano (JetPack 4.5) with RPLidar
 - ROS Melodic and teb_local_planner (AMCL) on remote launch...
 
 ## Installation
