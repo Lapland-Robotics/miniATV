@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 Terminal=true
-Exec=/home/hk/run_waypoints_pub_remote.sh
+Exec=/home/< YOUR USERNAME >/run_waypoints_pub_remote.sh
 Name=WaypointsRemote
-Icon=/home/hk/waypoints_icon.svg
+Icon=/home/< YOUR USERNAME >/waypoints_icon.svg
 
