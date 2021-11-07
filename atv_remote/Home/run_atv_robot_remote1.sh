@@ -13,6 +13,7 @@ source ~/.bashrc
 export ROS_MASTER_URI=http://$robot_IP:11311
 export ROS_IP=$robot_IP
 roslaunch atv_setup atv_remote.launch
+# roslaunch atv_setup atv_remote.launch
 endoflist
 
 
