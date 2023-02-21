@@ -1,0 +1,44 @@
+<!-- 
+CS: Outsourcing the odom part of the atv_remote.launch file to be able to time it's start with timed_roslaunch,
+because the remapping of the Ouster lidar PointCloud2 to the /scan topic takes initially up to 17 seconds, 
+which gives timeout errors in the navigation whicht depends on the /scan topic.
+Later on if the navigation is changed away from amcl, this might not be important any more, but a modular approach to
+launch files makes the code easily reusable anyways.
+-->
+
+
+<launch>
+
+        <!--  ************** Global Parameters ***************  -->
+        <param name="/use_sim_time" value="false"/> <!-- CS: For simulation? -->
+
+	<!--  ************** Navigation ***************  --> 
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		
+  	  	<rosparam file="$(find atv_setup)/cfg/costmap_common_params.yaml" command="load" ns="global_costmap" />
+  	 	<rosparam file="$(find atv_setup)/cfg/costmap_common_params.yaml" command="load" ns="local_costmap" />
+  		<rosparam file="$(find atv_setup)/cfg/local_costmap_params.yaml" command="load" />
+  		<rosparam file="$(find atv_setup)/cfg/global_costmap_params.yaml" command="load" />
+  		<rosparam file="$(find atv_setup)/cfg/teb_local_planner_params.yaml" command="load" />
+
+		<param name="base_global_planner" value="global_planner/GlobalPlanner" />
+		<param name="planner_frequency" value="1.0" />
+		<param name="planner_patience" value="5.0" />
+
+		<param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+		<param name="controller_frequency" value="3.0" />
+		<param name="controller_patience" value="15.0" />
+
+                <param name="clearing_rotation_allowed" value="false" /> <!-- Our ATV is not able to rotate in place -->
+	</node>
+
+
+        <!--  ****** amcl *****  -->
+	<node pkg="amcl" type="amcl" name="amcl" output="screen">
+		<rosparam file="$(find atv_setup)/cfg/amcl_params.yaml" command="load" />
+		<param name="publish_frequency" value="100" />
+	        <param name="initial_pose_x"            value="9"/>
+		<param name="initial_pose_y"            value="6"/>
+		<param name="initial_pose_a"            value="3.14"/>
+	</node>
+</launch>
