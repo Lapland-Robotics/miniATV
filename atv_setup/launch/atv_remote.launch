@@ -14,18 +14,14 @@
 <launch>
 
         <!--  ************** Global Parameters ***************  -->
-        <param name="/use_sim_time" value="false"/>
+        <param name="/use_sim_time" value="false"/> <!-- CS: For simulation? -->
 
-	<!--  ****** Maps *****  -->
+	<!--  ****** map *****  -->
+	<!-- CS: In the tf tree the map node is published 2 seconds in the future to keep the tree as recent as possible, on worklaptop this is shown as -1.8 in "most recent transform" -->
 	<node name="map_server" pkg="map_server" type="map_server" args="$(find atv_setup)/maps/robotlab.yaml" output="screen">
-        <param name="frame_id" value="map"/>
+        	<param name="frame_id" value="map"/>
 	</node>
 
-        <!--  ****** DONT DO THIS: ODOM STATIC TO MAP ;) ;) ;)  *****  -->
-        <!-- <node pkg="tf" type="static_transform_publisher" name="fixed_map" args="0 0 0 0 0 0 1 map odom 100" />-->
-
-        <!--  ****** static frame *****  -->
-        <!-- static_transform_publisher x y z qx qy qz qw frame_id child_frame_id time-->
 	<!--  ****** base link *****  -->
        <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="-0.31 0 0.48 0 0 0 1 base_link base_laser_link 100"/>
 
@@ -33,59 +29,96 @@
        <node pkg="tf" type="static_transform_publisher" name="footprint_to_base_link" args="0.36 0 0 0 0 0 1 base_footprint base_link 100"/>
 
 	<!--  ****** odom *****  -->
-       <!-- <node pkg="atv_setup" type="atv_odometry" name="atv_odometry" output="screen">
-        </node>-->
         <node pkg="atv_setup" name="atv_control_and_odom" type="atv_control_and_odom.py" output="screen"> 
 	</node>
 
-        <!--  ************** Navigation ***************  -->
-	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-  	  	<rosparam file="$(find atv_setup)/cfg/costmap_common_params.yaml" command="load" ns="global_costmap" />
-  	 	<rosparam file="$(find atv_setup)/cfg/costmap_common_params.yaml" command="load" ns="local_costmap" />
-  		<rosparam file="$(find atv_setup)/cfg/local_costmap_params.yaml" command="load" />
-  		<rosparam file="$(find atv_setup)/cfg/global_costmap_params.yaml" command="load" />
-  		<rosparam file="$(find atv_setup)/cfg/teb_local_planner_params.yaml" command="load" />
-
-		<param name="base_global_planner" value="global_planner/GlobalPlanner" />
-		<param name="planner_frequency" value="1.0" />
-		<param name="planner_patience" value="5.0" />
-
-		<param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
-		<param name="controller_frequency" value="3.0" />
-		<param name="controller_patience" value="15.0" />
-
-                <param name="clearing_rotation_allowed" value="false" /> <!-- Our ATV is not able to rotate in place -->
-	</node>
 
 
-        <!--  ****** amcl *****  -->
-	<node pkg="amcl" type="amcl" name="amcl" output="screen">
-		<rosparam file="$(find atv_setup)/cfg/amcl_params.yaml" command="load" />
+<!--  *************** Ouster Lidar ***************  -->
+	<arg name="ouster_ns" default="ouster" doc="Override the default namespace of all ouster nodes"/>
+	<arg name="sensor_hostname" default="os1-122030000368.local" doc="hostname or IP in dotted decimal form of the sensor"/>
+	<arg name="udp_dest" default="172.16.200.106" doc="hostname or IP where the sensor will send data packets"/>
+	<arg name="lidar_port" default="0" doc="port to which the sensor should send lidar data"/>
+	<arg name="imu_port" default="0" doc="port to which the sensor should send imu data"/>
+	<arg name="udp_profile_lidar" default=" " doc="lidar packet profile; possible values: {
+	  LEGACY,
+	  RNG19_RFL8_SIG16_NIR16_DUAL,
+	  RNG19_RFL8_SIG16_NIR16,
+	  RNG15_RFL8_NIR8
+	  }"/>
+	<arg name="lidar_mode" default=" " doc="resolution and rate; possible values: {
+	  512x10,
+	  512x20,
+	  1024x10,
+	  1024x20,
+	  2048x10,
+	  4096x5
+	  }"/>
+	<arg name="timestamp_mode" default="TIME_FROM_ROS_TIME" doc="method used to timestamp measurements; possible values: {
+	  TIME_FROM_INTERNAL_OSC,
+	  TIME_FROM_SYNC_PULSE_IN,
+	  TIME_FROM_PTP_1588,
+	  TIME_FROM_ROS_TIME
+	  }"/>
+	<arg name="metadata" default=" " doc="path to write metadata file when receiving sensor data"/>
+	<arg name="viz" default="false" doc="whether to run a rviz"/>
+	<arg name="rviz_config" default="-d $(find atv_setup)/cfg/rviz_navigation.rviz"/>	
+	<arg name="tf_prefix" default=" " doc="namespace for tf transforms"/>
 
-	        <param name="initial_pose_x"            value="9"/>
-		<param name="initial_pose_y"            value="6"/>
-		<param name="initial_pose_a"            value="3.14"/>
-	</node>
+	<include file="$(find ouster_ros)/launch/sensor.launch">
+		<arg name="sensor_hostname" value="$(arg sensor_hostname)"/>
+		<arg name="ouster_ns" value="$(arg ouster_ns)"/>
+		<arg name="viz" value="$(arg viz)"/>
+		<arg name="rviz_config" value="$(arg rviz_config)"/>
+		<arg name="tf_prefix" value="$(arg tf_prefix)"/>
+		<arg name="timestamp_mode" value="$(arg timestamp_mode)"/>
+		
+	</include>
+	
+	<remap from="points" to="os1/points" />
+	
+	<node pkg="tf" name="os1" type="static_transform_publisher" args="0 0 0 0 0 0 base_laser_link os_sensor 10"/> <!-- 10 for Hz, but this gave an error after the upgrade? -->
+
+	<!-- *** PointCloud2 to LaserScan *** See all params at http://wiki.ros.org/pointcloud_to_laserscan   --> 
+	<node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+    
+    		<!-- Frame of your depth sensor -->  
+    		<!-- <param name="target_frame" value="base_laser_link"/> -->
+
+    		<!-- Topic from which to read PointCloud2 -->  
+    		<remap from="cloud_in" to="ouster/points"/>
+    
+    		<!-- Topic to which LaserScan will be published -->  
+    		<remap from="scan" to="/scan"/> 
+
+  	</node> 
+
 
          <!--  ****** rosserial *****  -->
         <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
         <param name="port" value="/dev/ATV_Interface_Port"/>
         <param name="baud" value="57600"/>
         </node>
-        <!-- ATV_Interface_Port and RPLidar_Port look text file "NOTE WHEN USE ESP32 WITH ROSSERIAL.txt" -->
-        <!-- *************** RPLidar A3 ********************  -->
-	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
-	<param name="serial_port"         type="string" value="/dev/RPLidar_Port"/>  
-	<param name="serial_baudrate"     type="int"    value="256000"/><!--A3 -->
-	<param name="frame_id"            type="string" value="base_laser_link"/>
-	<param name="inverted"            type="bool"   value="false"/>
-	<param name="angle_compensate"    type="bool"   value="true"/>
-	<param name="scan_mode"           type="string" value="Sensitivity"/>
-	</node>
+
+	<!-- ******************************* Includes Navigation, amcl ****************** -->
+	
+	<include file="$(find timed_roslaunch)/timed_roslaunch.launch"> 
+		<arg name="time" value="20" />
+		<arg name="pkg" value="atv_setup" />
+		<arg name="file" value="atv_remote_include_amcl.launch" />
+	</include>	
+
+
+	
 
         <!--  *************** Waypoints ***************  -->
+	<!-- CS: Waypoints commented out due to error, will be fixed later:
+[waypoint_publisher-17] process has died [pid 9972, exit code 1, cmd /home/hk/catkin_ws/src/atv_setup/scripts/pub_waypoints.py points:=os1/points __name:=waypoint_publisher __log:=/home/hk/.ros/log/fc57f43a-ac3b-11ed-89c5-00044bec3cdc/waypoint_publisher-17.log].
+log file: /home/hk/.ros/log/fc57f43a-ac3b-11ed-89c5-00044bec3cdc/waypoint_publisher-17*.log  
+
         <node pkg="atv_setup" name="waypoint_publisher" type="pub_waypoints.py" output="screen"> 
 	</node>
+	-->
 
 	  <!--  **************** Visualisation ****************  -->
 	<!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find atv_setup)/cfg/rviz_navigation.rviz">
