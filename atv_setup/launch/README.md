@@ -10,6 +10,6 @@
 
 **- atv_in_stage_remote.launch: For remote launch of miniATV in Stage simulator. For testing algorithms in miniATV**
 
-**- atv_remote_include_amcl.launch: Include of the main launch file atv_remote.launch
+**- atv_remote_include_amcl.launch: Include of the main launch file atv_remote.launch**
 
 **- RPLidar_at.bash and RPLidar.sh: Launch and scripts for launch RPLidar laser scanner with right permissions. Note! You don't need to use these files if you read and follow the installation guide of atv_setup.**
