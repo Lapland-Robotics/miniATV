@@ -1,8 +1,19 @@
 # miniATV
-[ROS](https://www.ros.org/) with [teb_local_planner](http://wiki.ros.org/teb_local_planner), autonomous electric mini ATV.
-nVidia Jetson Nano with RPLidar and wheel odometry.
+with:
+- nVidia Jetson Nano
+- Ubuntu 18.04 LTS
+- [Ouster Lidar OS1](https://ouster.com/products/scanning-lidar/os1-sensor/)
+- [ROS melodic](http://wiki.ros.org/melodic)
 
-### atv_setup: Codes for miniATV robot.
+
+Dependencies: 
+- [Hector_SLAM](http://wiki.ros.org/hector_slam)
+- [Ouster-ros](https://github.com/ouster-lidar/ouster-ros)
+
+
+
+Old Readme:
+### atv_setup: Codes that has to be on the Jetson Nano in the miniATV robot.
 ### atv_control: Codes for control and launch miniATV remotely.
 ### atv_simulator: Codes for simulate miniATV (atv_setup) in Stage simulator
 
