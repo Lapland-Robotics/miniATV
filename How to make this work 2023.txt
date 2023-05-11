@@ -1,0 +1,11 @@
+You have to make following changes in Arduino IDE to make code work:
+1.In board manager, use esp32 2.0.0 version
+2.in library manager, use ESP32TimerInterrupt version 1.5.0
+3.in library manager, use ROSserial version 0.9.1
+4.Go here https://github.com/enwaytech/ros_lib_arduino/tree/master 
+,download ZIP, and then move ackermann_msgs folder from src folder
+to "C:\ArduinoIDE\libraries\Rosserial_Arduino_Library\src" 
+or wherever your Arduino IDE library folder is located
+5.Bob is your uncle
+6.This is not yet tested with fresh setup, make sure to check other guides in
+case of trouble.
