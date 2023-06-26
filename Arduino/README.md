@@ -1,3 +1,37 @@
+For both the motor controller ESP32 and the GPS sensor ESP32:
+
+Very important!
+1. Install rosserial in Arduino IDE (Ubuntu or Windows)
+2. search for ros.h and replace
+
+#if defined(ESP8266) or defined(ESP32) or defined(ROSSERIAL_ARDUINO_TCP)
+  #include "ArduinoTcpHardware.h"
+#else
+  #include "ArduinoHardware.h"
+#endif
+
+with this:
+
+#if defined(ROSSERIAL_ARDUINO_TCP)
+  #include "ArduinoTcpHardware.h"
+#else
+  #include "ArduinoHardware.h"
+#endif
+
+For the GPS sensor ESP32:
+Currently used libraries, boards and versions in Arduino IDE:
+- "esp32" (by ESpressive) version 2.0.9. (newest at that time) -> Select "SparkFun ESP32 MicroMod" board
+- "SparkFun u-blox GNSS v3" version 3.0.16 (newest at that time) (https://github.com/sparkfun/SparkFun_u-blox_GNSS_v3)
+- "Rosserial Arduino Library" version 0.9.1 (newest at that time)
+
+For the motor controller ESP32:
+
+
+
+
+## See also previous readme:
+
+
 # Arduino sketch for ATV Interface (ESP32)
 ## Install Arduino IDE
 You can use _Ubuntu Sofware_ -application for installing Arduino IDE
