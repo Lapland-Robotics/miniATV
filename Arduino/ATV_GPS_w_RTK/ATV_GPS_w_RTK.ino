@@ -5,16 +5,6 @@ For the SparkFun MicroMod ESP32 with an SparkFun GNSS ZED-F9P Carrier Board and 
 
 This code establishes an RTK correction data stream as a NTRIP Client using the ESP32's WiFi connection (with the input of your local 
 WiFi's credentials in secrets.h) and pushes the obtained RTK correction data to the ZED-F9P via I2C. 
-
-Those two processes are looped, the frequency of the loop is determined by myGNSS.setNavigationFrequency(x) which determines how often per second a navigation
-solution is available and forces this rythm onto the loop, since getting positon and accuracy data is waiting for the newest navigation solution.
-Therefore, also the ROS messages are forced into the frequency of x-times per second, so if a higher frequency in ROS messages is desired, increase x.
-In Example_15, the programm waits for the next RTCM frame to be available for reading and then pushing to the GNSS sensor, but since that takes usually
-somewhere between 400 and 800 ms (via NLS with mountpoint ROV2, around 1000ms with rtk2go and mountpoint Taroniemi) with this code, 
-it is not possible to wait for that, especially if a shorter frequency than that is desired for the ROS messages
-If rosserial is giving a sync error, check if the Wifi is connected and that no loop in the program runs longer than a few seconds, 
-since ROS assumes a lost connection in that case.
-
 Two RTK correction data services can be used around Rovaniemi:
 RTK2go provides the RTK data for free and without registration, their closest mountpoint for the LapinAMK in Rovaniemi is Taroniemi near Ylitornio, approximately 100km 
 from Rovaniemi. Usually, a mountpoint should be as close as possible and should not be further away than approximately 30km. Surprisingly, the accuracy is still ok
@@ -23,6 +13,16 @@ The NLS (https://www.maanmittauslaitos.fi/en/finpos/rtk) has a base station in R
 but it closes the connection after every RTK data delivery unexpectedly. Even with that, it is a bit faster in getting a full dataframe than RTK2go
 After pushing RTK correction data to the ZED-F9P, position and accuracy data are obtained from the sensor and then send out via rosserial
 as ROS messages.
+Those two processes are looped, the frequency of the loop is determined by myGNSS.setNavigationFrequency(x) which determines how often per second a navigation
+solution is available and forces this rythm onto the loop, since getting positon and accuracy data is waiting for the newest navigation solution.
+Therefore, also the ROS messages are forced into the frequency of x-times per second, so if a higher frequency in ROS messages is desired, increase x.
+In Example_15, the programm waits for the next RTCM frame to be available for reading and then pushing to the GNSS sensor, but since that takes usually
+somewhere between 400 and 800 ms (via NLS with mountpoint ROV2, around 1000ms with rtk2go and mountpoint Taroniemi) with this code, 
+it is not possible to wait for that, especially if a shorter frequency than that is desired for the ROS messages
+If rosserial is giving a sync error, check if the Wifi is connected and that no loop in the program runs longer than a few seconds, 
+since ROS assumes a lost connection in that case.
+Unfortunately, the RTK2go mountpoint Taroniemi is also often only giving 21 RTCM data instead of the normal over 900 (which the NLS is giving if it is working),
+maybe it is offline sometimes?
 
 Board: SparkFun ESP32 MicroMod
 BoardManager: esp32 by Espressif Systems, version 2.0.9. (version 2.0.10 came out during the programming of this code but was not tested with the setup)
@@ -219,7 +219,6 @@ void loop()
       //Do not wait until the RTCM frame is available,
       //since that takes usually between 400 and 800 ms 
 
-
       //Check reply
       bool connectionSuccess = false;
       char response[512];
@@ -247,7 +246,8 @@ void loop()
 
   if (ntripClient.connected() == true)
   {
-    uint8_t rtcmData[512 * 4]; //Most incoming data is around 500 bytes but may be larger
+    // Occasionally incoming data is over 2295 bytes, so the original max of 2048 bytes had to be increased
+    uint8_t rtcmData[512 * 5]; //Most incoming data is more than 1000 bytes
     rtcmCount = 0;
 
     //Print any available RTCM data
@@ -255,14 +255,21 @@ void loop()
     {
       nh.spinOnce();
       rtcmData[rtcmCount++] = ntripClient.read();
-      if (rtcmCount == sizeof(rtcmData)) break;
+      if (rtcmCount == sizeof(rtcmData)) // If the incoming data reaches the maximum storage => break!
+      {
+        debug_msg += " - Maximum storage for incoming data reached: ";
+        debug_msg += String(rtcmCount);
+        break;
+        
+      }
     }
 
     if (rtcmCount > 0)
     {
-      debug_msg += " - Last received full RTCM frame [ms]: ";
+      debug_msg += " - Last received RTCM frame [ms]: ";
       debug_msg += String(millis() - lastReceivedRTCM_ms);
       lastReceivedRTCM_ms = millis();
+        
       
       //Push RTCM to GNSS module over I2C
       myGNSS.pushRawData(rtcmData, rtcmCount, false);
@@ -274,7 +281,7 @@ void loop()
   //Close socket if we don't have new data for 60s
   if (millis() - lastReceivedRTCM_ms > maxTimeBeforeHangup_ms)
   {
-    debug_msg += "No new RTCM data in 60s. Timeout. Disconnecting...";
+    debug_msg += "- No new RTCM data in 60s. Timeout. Disconnecting... ";
     str_msg.data = debug_msg.c_str();
     atv_gps_debug.publish(&str_msg);
     nh.spinOnce();
@@ -392,7 +399,10 @@ void loop()
   }
   else
   {
-    debug_msg += "Not able to get position data from sensor!";
+    // Occasionally the incoming RTCM data exceeds the size of the storage array
+    // and this incomplete frame is then pushed to the GNSS sensor
+    // and every time that happens, myGNSS.getHPPOSLLH() fails, maybe because the sensor is still busy
+    debug_msg += " - Not able to get position data from sensor! ";
   }
 
   // Publish the debug message
