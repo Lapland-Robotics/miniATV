@@ -24,6 +24,15 @@ since ROS assumes a lost connection in that case.
 Unfortunately, the RTK2go mountpoint Taroniemi is also often only giving 21 RTCM data instead of the normal over 900 (which the NLS is giving if it is working),
 maybe it is offline sometimes?
 
+NavSatFix ROS message: 
+Note that the definitin of the message requires the height above elipsoid and squared accuracies
+in the position covariance matrix.
+Since the WinterSIM coordinates are based on the height above mean sea level,
+that is given as input to the ROS NavSatFix message instead.
+Also the message definition asks for the accuracies to be sqared in the position
+covariance matrix, but the other code would have to unsquare that again, so the
+unsquared number is transmitted instead of the squared one.
+
 Board: SparkFun ESP32 MicroMod
 BoardManager: esp32 by Espressif Systems, version 2.0.9. (version 2.0.10 came out during the programming of this code but was not tested with the setup)
 Libraries: SparkFun u-blox GNSS v3 (version 3.0.16 - newest at that time), Rosserial Arduino Library (version 0.9.1 - newest at that time)
@@ -302,6 +311,8 @@ void loop()
   // getHighResLongitudeHp: returns the high resolution component of longitude from HPPOSLLH as an int8_t in degrees * 10^-9
   // getElipsoid: returns the height above ellipsoid as an int32_t in mm
   // getElipsoidHp: returns the high resolution component of the height above ellipsoid as an int8_t in mm * 10^-1
+  // getMeanSeaLevel: returns the height above mean sea level as an int32_t in mm
+  // getMeanSeaLevelHp: returns the high resolution component of the height above mean sea level as an int8_t in mm * 10^-1
   // getHorizontalAccuracy: returns the horizontal accuracy estimate from HPPOSLLH as an uint32_t in mm * 10^-1
 
   // If you want to use the high precision latitude and longitude with the full 9 decimal places
@@ -319,6 +330,8 @@ void loop()
   int8_t longitudeHp = myGNSS.getHighResLongitudeHp();
   int32_t ellipsoid = myGNSS.getElipsoid();
   int8_t ellipsoidHp = myGNSS.getElipsoidHp();
+  int32_t msl = myGNSS.getMeanSeaLevel();
+  int8_t mslHp = myGNSS.getMeanSeaLevelHp();
   uint32_t horizontal_accuracy = myGNSS.getHorizontalAccuracy();
   uint32_t vertical_accuracy = myGNSS.getVerticalAccuracy();
 
@@ -362,13 +375,17 @@ void loop()
     
     // Now define float storage for the heights and accuracy
     float f_ellipsoid;
-    //float f_msl;
+    float f_msl;
     float f_horizontal_accuracy;
     float f_vertical_accuracy;
   
     // Calculate the height above ellipsoid in mm * 10^-1 and then convert from mm * 10^-1 to m
     f_ellipsoid = (ellipsoid * 10) + ellipsoidHp;
     f_ellipsoid = f_ellipsoid / 10000.0;
+
+    // Calculate the height above mean sea level in mm * 10^-1 and then convert from mm to m
+    f_msl = (msl * 10) + mslHp;
+    f_msl = f_msl / 10000.0; // Convert from mm * 10^-1 to m
   
     // Convert the horizontal accuracy (mm * 10^-1) to a float and then convert from mm * 10^-1 to m
     f_horizontal_accuracy = horizontal_accuracy;
@@ -388,7 +405,10 @@ void loop()
     gps_msg.header.frame_id = "map";
     gps_msg.latitude = f_latitude;
     gps_msg.longitude = f_longitude;
-    gps_msg.altitude = f_ellipsoid;
+    // altitude should be height above elipsoid according to ROS message definition
+    // but WinterSIM uses height above mean sea level wich is a 20m difference
+    // so instead of the f_ellipsoid, f_msl is transmitted
+    gps_msg.altitude = f_msl; 
     gps_msg.position_covariance[0] = acc_cov[0];
     gps_msg.position_covariance[4] = acc_cov[4];
     gps_msg.position_covariance[8] = acc_cov[8];
