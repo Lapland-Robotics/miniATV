@@ -1,6 +1,6 @@
 ## carla_ros_bridge
-All carla_ros_bridge files that have been changed for "miniATV goes WinterSIM",
-replace the original code in the opt/carla_ros_bridge/melodic folder
+All carla_ros_bridge files that have been changed for "miniATV goes WinterSIM".
+Replace the original code in the opt/carla_ros_bridge/melodic folder
 and modify the configuration files according to the instructions below.
 
 #### Important! 
