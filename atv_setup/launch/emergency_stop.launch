@@ -1,0 +1,96 @@
+<launch>
+
+        <!--  ************** Global Parameters ***************  -->
+        <param name="/use_sim_time" value="false"/> <!-- Has to be "false" since the miniATV cant use simulation time due to rosserial!-->
+	
+
+	<!-- Remap only needed for code testing 
+	<remap from="/carla/ego_vehicle/ackermann_cmd" to="/emergency_cmd"/>    
+	<remap from="/carla/ego_vehicle/ackermann_cmd" to="/ackermann_cmd"/>
+	-->
+
+
+	<!--  *************** Ouster Lidar ***************  -->
+	<arg name="ouster_ns" default="ouster" doc="Override the default namespace of all ouster nodes"/>
+	<arg name="sensor_hostname" default="os1-122030000368.local" doc="hostname or IP in dotted decimal form of the sensor"/>
+	<arg name="udp_dest" default="172.16.200.106" doc="hostname or IP where the sensor will send data packets"/>
+	<arg name="lidar_port" default="0" doc="port to which the sensor should send lidar data"/>
+	<arg name="imu_port" default="0" doc="port to which the sensor should send imu data"/>
+	<arg name="udp_profile_lidar" default=" " doc="lidar packet profile; possible values: {
+	  LEGACY,
+	  RNG19_RFL8_SIG16_NIR16_DUAL,
+	  RNG19_RFL8_SIG16_NIR16,
+	  RNG15_RFL8_NIR8
+	  }"/>
+	<arg name="lidar_mode" default="512x10" doc="resolution and rate; possible values: {
+	  512x10,
+	  512x20,
+	  1024x10,
+	  1024x20,
+	  2048x10,
+	  4096x5
+	  }"/>
+	<arg name="timestamp_mode" default="TIME_FROM_ROS_TIME" doc="method used to timestamp measurements; possible values: {
+	  TIME_FROM_INTERNAL_OSC,
+	  TIME_FROM_SYNC_PULSE_IN,
+	  TIME_FROM_PTP_1588,
+	  TIME_FROM_ROS_TIME
+	  }"/>
+	<arg name="metadata" default=" " doc="path to write metadata file when receiving sensor data"/>
+	<arg name="viz" default="false" doc="whether to run a rviz"/>
+	<arg name="rviz_config" default="-d $(find atv_setup)/cfg/rviz_navigation.rviz"/>	
+	<arg name="tf_prefix" default=" " doc="namespace for tf transforms"/>
+
+	<include file="$(find ouster_ros)/launch/sensor.launch">
+		<arg name="sensor_hostname" value="$(arg sensor_hostname)"/>
+		<arg name="ouster_ns" value="$(arg ouster_ns)"/>
+		<arg name="viz" value="$(arg viz)"/>
+		<arg name="rviz_config" value="$(arg rviz_config)"/>
+		<arg name="tf_prefix" value="$(arg tf_prefix)"/>
+		<arg name="lidar_mode" value="$(arg lidar_mode)"/>
+		<arg name="timestamp_mode" value="$(arg timestamp_mode)"/>
+		
+	</include>
+
+
+	<!-- *** PointCloud2 to LaserScan *** See all params at http://wiki.ros.org/pointcloud_to_laserscan   --> 
+	<node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+    
+    		<!-- Frame of your depth sensor -->  
+    		<!-- <param name="target_frame" value="base_laser_link"/> -->
+
+    		<!-- Topic from which to read PointCloud2 -->  
+    		<remap from="cloud_in" to="ouster/points"/>
+    
+    		<!-- Topic to which LaserScan will be published -->  
+    		<remap from="scan" to="/scan"/> 
+
+  	</node> 
+
+	<!-- ***********************Wait for ouster lidar start****************** -->
+	<!-- commented out for indoor code testing in confinded space	
+	<include file="$(find timed_roslaunch)/timed_roslaunch.launch"> 
+		<arg name="time" value="20" />
+		<arg name="pkg" value="atv_setup" />
+		<arg name="file" value="emergency_break.py" />
+	</include>
+	-->
+	<!--
+	<node pkg="atv_setup" name="emergency_break" type="emergency_break.py" output="screen"> 
+	</node>
+	-->
+
+         <!--  ****** rosserial connection to the miniATV's motor controller ESP32 *****  -->
+        <node pkg="rosserial_python" type="serial_node.py" name="serial_node_atv_motor_contr">
+        <param name="port" value="/dev/ATV_Interface_Port"/>
+        <param name="baud" value="57600"/>
+        </node>
+         
+	<!--  ****** rosserial connection to the miniATV's GNSS sensor *****  -->
+        <node pkg="rosserial_python" type="serial_node.py" name="serial_node_atv_gps">
+        <param name="port" value="/dev/ttyUSB1"/>
+        <param name="baud" value="57600"/>
+        </node>
+	
+
+</launch>
