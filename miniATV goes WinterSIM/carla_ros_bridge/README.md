@@ -16,3 +16,6 @@ Modify AckermannControl.perspective in /opt/carla_ros_bridge/share/carla_ackerma
 
 ### gps_carla_ros_bridge_w_ego_vehicle.launch
 can be in any launch file folder in opt/carla_opt/carla_ros_bridge/melodic/share, for example in .../carla_ros_bridge/launch. Launches carla_manual_control, carla_ackermann_control and an ego vehicle. Rosserial too, if the gps sensor is connected to the laptop instead of the miniATV for testing - usually rosserial and carla's simulation time do not work together at all, maybe it does in this case because use_sim_time is not set to True in the launch file itself?
+
+### carla_manual_control.py
+replaces /opt/carla_ros_bridge/melodic/lib/carla_manual_control/carla_manual_control.py
