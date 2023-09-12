@@ -106,7 +106,7 @@ class World(object):
         print(self.origin_geolocation)
 
 
-        print("WinterSIM weather: " + str(self.world.get_weather()))
+        #print("WinterSIM weather: " + str(self.world.get_weather()))
 
         spawn_points = self.map.get_spawn_points()
         self.spawn_point_location = spawn_points[0].location
@@ -155,15 +155,20 @@ class World(object):
             "distance_info", String, queue_size=1)
         
          # TODO: In case of more than one digital miniATV: Adapt this
-         # TODO: world is not yet available, and spawning takes time, wait for world to be ready?
         self.dt_miniATV = self.world.get_actors().filter('vehicle.miniatv.miniatv')[0] # should be spawned by the time manual_control gets launched
-        print(self.dt_miniATV)
+        
         # teleport vehicle to starting position of the rosbag
         # TODO: set new spawnpoint for starting position of rosbag(s)
         self.dt_miniATV_start_loc = self.geodetic_gnss_to_carla_location(66.48072052, 25.7217960358, 79.8890151978) #lat, lon, alt
         print("teleport dt miniATV to start position ")
         print(self.dt_miniATV_start_loc)
         self.dt_miniATV.set_location(self.dt_miniATV_start_loc)
+
+        # Teleport the spectator perspective to a good viewpoint for the tests
+        #TODO: Find perspective for spectator that resembles the camera view for the tests
+        #print("Spectator: ")
+        #print(self.world.get_spectator().get_transform().location)
+        self.world.get_spectator().set_transform(carla.Transform(carla.Location(x=4.598881, y=143.074280, z=79.111603), carla.Rotation(pitch=1.169055, yaw=-51.055328, roll=-0.142578)))
 
 
 
@@ -243,6 +248,9 @@ class World(object):
         dt_gnss_alt = data.altitude
         self.dt_gnss_location = self.geodetic_gnss_to_carla_location(dt_gnss_lat, dt_gnss_lon, dt_gnss_alt)
 
+        print("Spectator: ")
+        print(self.world.get_spectator().get_transform())
+
         # For comparisons with the real miniATV's GNSS topic:
         try:
             gps_topic_hz = self.dt_gnss_hz.get_hz("/carla/ego_vehicle/gnss/gnss1/fix")[0]
@@ -291,14 +299,7 @@ class World(object):
         # SI unit: probably meter since meter and m/s are the standard units of CARLA
         
         
-        #print("list ")
-        #print(self.dt_miniATV)
-        #print(self.world.get_actors().filter('vehicle.*'))
         dt_miniATV_location = self.dt_miniATV.get_transform().location
-        #print()
-        #print("digital miniATV pos: ")
-        #print(self.dt_miniATV.get_transform().location)
-        #print()
         
         try:
             gps_topic_hz = self.hz.get_hz("/atv_gps")[0]
