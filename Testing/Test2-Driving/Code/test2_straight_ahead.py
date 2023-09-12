@@ -66,25 +66,19 @@ def publish_stop_cmd():
     test_cmd_to_pt_miniATV.publish(drive_msg)
 
 
+# Initialize time keeping variables
 drive_time = time.time()
 wait_after_drive = time.time()
 
+# Start the test timer and the recording and change to the data storage folder for that
 owd = os.getcwd()
-print("Orig dir: " +  str(owd))
-test_start = time.time()
-print("test_start type: " + str(type(test_start)))
 os.chdir('/home/cs/Documents/Master_Thesis/Test_Data/Test2_Drive_Straight_Ahead')
-print("Changed dir: " + str(os.getcwd()))
-
+test_start = time.time()
 bag_record = subprocess.Popen(["/bin/bash", "./test2_start_rosbag_recording.sh"])
-
-rospy.loginfo("After bash script time: ")
-bash_dur = time.time() - test_start
 os.chdir(owd)
-rospy.loginfo(bash_dur)
+
 gnss_wait = 60 # [s] Waittime before and after drive to get a good average for the GNSS position of the start- and endpoint
 drive_duration = 10 # [s] Drive for 10 s, which equates roughly 10 m
-print("After change back dir: " + str(os.getcwd()))
     
 r = rospy.Rate(5)
 # Can't use rospy.Time.now() instead of time.time(), or the miniATV will spawn at the wrong position (?!) 
@@ -92,30 +86,30 @@ r = rospy.Rate(5)
 # so maybe it's carla's simulation time?
 while not rospy.is_shutdown():
     # Before the test drive
-    if time.time() - test_start <= 10:
+    if time.time() - test_start <= gnss_wait:
+        # wait 60 s at the starting position before the drive for the GNSS to have a precise positon
         print("Wait before test drive!")
-        print(str(time.time() - test_start) + " of 10 s")
-        # wait X min at starting position before the drive for the GNSS to have a precise positon
+        print(str(time.time() - test_start) + " of " + str(gnss_wait) + " s")
         publish_stop_cmd()
         drive_time = time.time()
     # During the test drive
-    elif time.time() - drive_time <= 10:
+    elif time.time() - drive_time <= drive_duration:
         print("Drive!")
-        print(str(time.time() - drive_time) + " of 10 s")
+        print(str(time.time() - drive_time) + " of " + str(drive_duration) + " s")
         publish_max_speed_cmd() # Max speed cmd to ackermann topics!
         wait_after_drive = time.time()
     # After the test drive
     elif time.time() - drive_time > 10:
+        # wait again 60 s for the miniATV to stop rolling and to have a precise GNSS positon of the end position
         print("Wait for test end")
-        # wait again X minutes for the miniATV to stop rolling and to have a precise GNSS positon of the end position
         if time.time() - wait_after_drive <= gnss_wait:
             print("Wait after drive!")
-            print(str(time.time() - wait_after_drive) + " of 10 s")
+            print(str(time.time() - wait_after_drive) + " of " + str(gnss_wait) + " s")
             publish_stop_cmd()
         else:
             print("END of Test2!!!!")
 
     else:
-        rospy.loginfo("Else! => Error in code")
+        rospy.loginfo("Else! => Error in test2 code")
     print()
     r.sleep()
