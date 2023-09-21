@@ -2,7 +2,8 @@
 
 Very important!
 1. Install rosserial in Arduino IDE (Ubuntu or Windows)
-2. search for ros.h and replace
+2. Get the ros_lib as an Arduino library: (https://automaticaddison.com/how-to-connect-arduino-to-ros/)
+3. search for ros.h and replace
 
 ```
 #if defined(ESP8266) or defined(ESP32) or defined(ROSSERIAL_ARDUINO_TCP)
