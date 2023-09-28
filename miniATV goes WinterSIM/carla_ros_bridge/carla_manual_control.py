@@ -155,8 +155,13 @@ class World(object):
             "distance_info", String, queue_size=1)
         
          # TODO: In case of more than one digital miniATV: Adapt this
+        # digital miniATV and it's sensors:
         self.dt_miniATV = self.world.get_actors().filter('vehicle.miniatv.miniatv')[0] # should be spawned by the time manual_control gets launched
-        
+        self.dt_gnss_sensor = self.world.get_actors().filter('sensor.other.gnss')[0]
+        self.dt_lidar_sensor = self.world.get_actors().filter('sensor.lidar.ray_cast')[0]
+        self.dt_lidar_sensor.set_transform(carla.Transform(carla.Location(x=0.022, y=-0.022, z = 0.7))) # y aligns with ouster cable!
+        self.dt_gnss_sensor.set_transform(carla.Transform(carla.Location(x = 0.025, z = 0.8)))
+
         # teleport vehicle to starting position of the rosbag
         # TODO: set new spawnpoint for starting position of rosbag(s)
         self.dt_miniATV_start_loc = self.geodetic_gnss_to_carla_location(66.48072052, 25.7217960358, 79.8890151978) #lat, lon, alt
@@ -168,8 +173,10 @@ class World(object):
         #TODO: Find perspective for spectator that resembles the camera view for the tests
         #print("Spectator: ")
         #print(self.world.get_spectator().get_transform().location)
-        self.world.get_spectator().set_transform(carla.Transform(carla.Location(x=4.598881, y=143.074280, z=79.111603), carla.Rotation(pitch=1.169055, yaw=-51.055328, roll=-0.142578)))
-
+        #self.world.get_spectator().set_transform(carla.Transform(carla.Location(x=4.598881, y=143.074280, z=79.111603), carla.Rotation(pitch=1.169055, yaw=-51.055328, roll=-0.142578)))
+        self.world.get_spectator().set_transform(self.dt_miniATV.get_transform())
+        # Test if geodetic to carla is accurate:
+        self.test_geodetic_to_carla_result()
 
 
 
@@ -248,8 +255,14 @@ class World(object):
         dt_gnss_alt = data.altitude
         self.dt_gnss_location = self.geodetic_gnss_to_carla_location(dt_gnss_lat, dt_gnss_lon, dt_gnss_alt)
 
-        print("Spectator: ")
-        print(self.world.get_spectator().get_transform())
+        #print("Spectator: ")
+        #print(self.world.get_spectator().get_transform())
+
+        #print(self.world.get_actors().filter('sensor.lidar.ray_cast'))
+        print("GNSS: ")
+        print(self.dt_gnss_sensor)
+        print(self.dt_gnss_sensor.get_transform())
+        
 
         # For comparisons with the real miniATV's GNSS topic:
         try:
@@ -260,8 +273,43 @@ class World(object):
             print("dt_gnss hz rate " + str(gps_topic_hz))
         except:
             print()
-    
-    
+
+        lidar_line_axis = self.dt_lidar_sensor.get_transform().location + carla.Location(x=0, y=0, z=0.2)
+
+        #self.world.debug.draw_point(self.dt_gnss_sensor.get_transform().location, size=0.1, color=carla.Color(255, 0, 255), life_time=1)
+        #self.world.debug.draw_point(self.dt_miniATV.get_transform().location, size=0.1, color=carla.Color(0, 255, 255), life_time=1)
+        #self.world.debug.draw_point(self.dt_lidar_sensor.get_transform().location, size=0.2, color=carla.Color(48, 79, 254), life_time=1)
+        #self.world.debug.draw_line(self.dt_lidar_sensor.get_transform().location, lidar_line_axis, thickness=0.01, color=carla.Color(48, 79, 254), life_time=1)
+        #self.world.debug.draw_line(self.dt_lidar_sensor.get_transform().location+carla.Location(x=0, y=-0.1, z=0), self.dt_lidar_sensor.get_transform().location+carla.Location(x=0, y=0.1, z=0), thickness=0.01, color=carla.Color(48, 79, 254), life_time=1)
+        #self.world.debug.draw_line(self.dt_lidar_sensor.get_transform().location+carla.Location(x=-0.1, y=0, z=0), self.dt_lidar_sensor.get_transform().location+carla.Location(x=0.1, y=0, z=0), thickness=0.01, color=carla.Color(48, 79, 254), life_time=1)
+        self.draw_cross(self.dt_lidar_sensor.get_transform().location)
+        #self.draw_cross(self.dt_gnss_sensor.get_transform().location, color=carla.Color(255, 0, 255))
+        self.draw_cross(self.dt_miniATV.get_transform().location, thickness=0.003, color=carla.Color(0, 255, 255))
+
+        print("Spectator: " + str(self.world.get_spectator().get_transform().location))
+
+
+    def draw_cross(self, location, length=0.1, thickness=0.01, color=carla.Color(74, 20, 140)):
+        """
+        Helper function for debugging and sensor placement which draws a cross (without -z, only 2*z)
+        location
+        
+        Parameters
+        ----------
+        self : carla world object
+        location : carla.Location
+        length : int
+            [m], length of each line from the origin, z will be double the length without -z
+        thickness : int
+            [m], thickness of each line
+        color : carla.Color(R, G, B)
+            default is lavender
+        """
+
+        self.world.debug.draw_line(location, location+carla.Location(x=0, y=0, z=(2*length)), thickness=thickness, color=color, life_time=1)
+        self.world.debug.draw_line(location+carla.Location(x=0, y=-length, z=0), location+carla.Location(x=0, y=length, z=0), thickness=thickness, color=color, life_time=1)
+        self.world.debug.draw_line(location+carla.Location(x=-length, y=0, z=0), location+carla.Location(x=length, y=0, z=0), thickness=thickness, color=color, life_time=1)
+
     def cb_display_real_gps_position(self, data): # CS
         """ 
         Callback for the 
@@ -330,6 +378,51 @@ class World(object):
         #origin_geolocation
 
 
+    def test_geodetic_to_carla_result(self):
+        number_tests = 10
+        print()
+        print("Geodetic startpoint: 66.48072052, 25.7217960358, 79.8890151978 [lat, lon, alt]")
+        #geodetic_to_carla = self.geodetic_gnss_to_carla_location(66.48072052, 25.7217960358, 79.8890151978) #lat, lon, alt
+        geodetic_to_carla = self.geodetic_gnss_to_carla_location(66.480721, 25.721796, 79.889015) #lat, lon, alt
+        startpoint = geodetic_to_carla
+        #carla_to_geoloc = self.map.transform_to_geolocation(carla.Location(geodetic_to_carla))
+        self.world.debug.draw_point(geodetic_to_carla, size=0.5, color=carla.Color(255, 0, 0), life_time=-1)
+        print("Startpoint: " + str(geodetic_to_carla))
+
+        for n in range(number_tests):
+            prev_carla_loc = geodetic_to_carla
+            print()
+            carla_to_geoloc = self.map.transform_to_geolocation(carla.Location(geodetic_to_carla)) 
+            print("Iteration " + str(n) + " --- in carlaloc: " + str(carla_to_geoloc))
+            geodetic_to_carla = self.geodetic_gnss_to_carla_location(carla_to_geoloc.latitude, carla_to_geoloc.longitude, carla_to_geoloc.altitude)
+            print("Iteration " + str(n) + " --- in geodetic: " + str(geodetic_to_carla))
+            self.world.debug.draw_point(geodetic_to_carla, size=0.5, color=carla.Color(255, 0, 0), life_time=-1)
+            print("Distance to prev carla_loc ")
+            print(self.dist_btw_carla_locs(prev_carla_loc, geodetic_to_carla))
+            print("Distance to carla start location: ")
+            print(self.dist_btw_carla_locs(startpoint, geodetic_to_carla))
+
+        test_num = 52.15
+        print(test_num)
+        print(round(test_num, 1))
+
+        #print(yfofj)
+
+    def abs_dist_btw_carla_locs(self, loc_a, loc_b):
+        x_abs_dist = math.sqrt(math.pow((loc_a.x - loc_b.x), 2))
+        y_abs_dist = math.sqrt(math.pow((loc_a.y - loc_b.y), 2))
+        z_abs_dist = math.sqrt(math.pow((loc_a.z - loc_b.z), 2))
+        return x_abs_dist, y_abs_dist, z_abs_dist
+    
+    def dist_btw_carla_locs(self, loc_a, loc_b):
+        # Distance with direction (since the drift in the GNSS conversion is only to one side)
+        x_abs_dist = (loc_a.x - loc_b.x)
+        y_abs_dist = (loc_a.y - loc_b.y)
+        z_abs_dist = (loc_a.z - loc_b.z)
+        return x_abs_dist, y_abs_dist, z_abs_dist
+
+
+
     def geodetic_gnss_to_carla_location(self, lat, lon, alt):
         """
         Source: https://github.com/carla-simulator/carla/issues/2737 with thanks to Kait0
@@ -353,14 +446,17 @@ class World(object):
         O_lat = self.origin_geolocation.latitude
         O_lon = self.origin_geolocation.longitude
         O_alt = self.origin_geolocation.altitude
-        print()
-        print("Exact lat, lon, alt of Rantavitikka origin ")
-        print(O_lat)
-        print(O_lon)
-        print(O_alt)
-        print()
+        #print()
+        #print("Exact lat, lon, alt of Rantavitikka origin ")
+        #print(O_lat)
+        #print(O_lon)
+        #print(O_alt)
+        #print()
         x_enu, y_enu, z_enu = self.geodetic_to_enu(lat, lon, alt, O_lat, O_lon, O_alt)
-
+        # compensate for drift in GNSS with approximate values
+        x_enu = x_enu - 0.015143
+        y_enu = y_enu + 0.244232 - 0.000443
+        z_enu = z_enu + 0.001465
         carla_location = carla.Location(x_enu, -y_enu, z_enu)
 
 
