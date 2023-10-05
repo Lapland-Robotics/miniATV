@@ -4,4 +4,4 @@
 
 echo "start recording of the rosbag"
 
-rosbag record --duration=2m --all # 2m = 2 minutes TODO: change to appropriate timespan
+rosbag record --all /topic __name:=test2_bag # records with that node name so it can be ended later
