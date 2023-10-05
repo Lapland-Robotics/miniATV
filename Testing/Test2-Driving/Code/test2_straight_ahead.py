@@ -30,11 +30,13 @@ And the data can also be used as a benchmark
 """
 
 import os
+import sys
 import subprocess
 import time
 
 import rospy
 from ackermann_msgs.msg import AckermannDriveStamped
+from carla_msgs.msg import CarlaEgoVehicleControl
 
 
 rospy.init_node('test2')
@@ -42,28 +44,45 @@ rospy.init_node('test2')
 max_speed = 100 # [m/s] There will be clipping according to the config parameters of each miniATV, so this can be regarded as MAX speed
 stop_speed = 0 # [m/s]
 steering_angle = 0 # [deg] Straight ahead
+carla_max_throttle = 1.0 # The miniATVs max speed is set at 4 km/h
+carla_min_throttle = 0.0
+carla_no_steering = 0.0
 
 drive_msg = AckermannDriveStamped()
 test_cmd_to_pt_miniATV = rospy.Publisher('/ackermann_cmd', AckermannDriveStamped, queue_size=1)
-test_cmd_to_dt_miniATV = rospy.Publisher('/carla/ego_vehicle/ackermann_cmd', AckermannDriveStamped, queue_size=1)
+#test_cmd_to_dt_miniATV = rospy.Publisher('/carla/ego_vehicle/ackermann_cmd', AckermannDriveStamped, queue_size=1)
+
+carla_drive_msg = CarlaEgoVehicleControl()
+test_cmd_to_dt_miniATV =  rospy.Publisher('/carla/ego_vehicle/vehicle_control_cmd', CarlaEgoVehicleControl, queue_size=1)
 
 
 def publish_max_speed_cmd():
     rospy.loginfo("speed = MAX")
+    # physical miniATV
     drive_msg.drive.speed = max_speed
     drive_msg.drive.steering_angle = steering_angle
     #drive_msg.header.stamp = rospy.Time.now() # Does not work with WinterSIM/carla_ros_bridge simulation time
-    test_cmd_to_dt_miniATV.publish(drive_msg)
+    #test_cmd_to_dt_miniATV.publish(drive_msg)
     test_cmd_to_pt_miniATV.publish(drive_msg)
+    # digital miniATV
+    carla_drive_msg.throttle = carla_max_throttle
+    carla_drive_msg.steer = carla_no_steering
+    test_cmd_to_dt_miniATV.publish(carla_drive_msg)
 
 
 def publish_stop_cmd():
     rospy.loginfo("speed = 0")
+    # physical miniATV
     drive_msg.drive.speed = stop_speed
     drive_msg.drive.steering_angle = steering_angle
     #drive_msg.header.stamp = rospy.Time.now() # Does not work with WinterSIM/carla_ros_bridge simulation time
-    test_cmd_to_dt_miniATV.publish(drive_msg)
+    #test_cmd_to_dt_miniATV.publish(drive_msg)
     test_cmd_to_pt_miniATV.publish(drive_msg)
+    # digital miniATV
+    carla_drive_msg.throttle = carla_min_throttle
+    carla_drive_msg.steer = carla_no_steering
+    test_cmd_to_dt_miniATV.publish(carla_drive_msg)
+    
 
 
 # Initialize time keeping variables
@@ -77,7 +96,7 @@ test_start = time.time()
 bag_record = subprocess.Popen(["/bin/bash", "./test2_start_rosbag_recording.sh"])
 os.chdir(owd)
 
-gnss_wait = 60 # [s] Waittime before and after drive to get a good average for the GNSS position of the start- and endpoint
+gnss_wait = 30 # [s] Waittime before and after drive to get a good average for the GNSS position of the start- and endpoint
 drive_duration = 10 # [s] Drive for 10 s, which equates roughly 10 m
     
 r = rospy.Rate(5)
@@ -87,7 +106,7 @@ r = rospy.Rate(5)
 while not rospy.is_shutdown():
     # Before the test drive
     if time.time() - test_start <= gnss_wait:
-        # wait 60 s at the starting position before the drive for the GNSS to have a precise positon
+        # wait 30 s at the starting position before the drive for the GNSS to have a precise positon
         print("Wait before test drive!")
         print(str(time.time() - test_start) + " of " + str(gnss_wait) + " s")
         publish_stop_cmd()
@@ -100,7 +119,7 @@ while not rospy.is_shutdown():
         wait_after_drive = time.time()
     # After the test drive
     elif time.time() - drive_time > 10:
-        # wait again 60 s for the miniATV to stop rolling and to have a precise GNSS positon of the end position
+        # wait again 30 s for the miniATV to stop rolling and to have a precise GNSS positon of the end position
         print("Wait for test end")
         if time.time() - wait_after_drive <= gnss_wait:
             print("Wait after drive!")
@@ -108,8 +127,10 @@ while not rospy.is_shutdown():
             publish_stop_cmd()
         else:
             print("END of Test2!!!!")
+            stop_record = subprocess.Popen(["/bin/bash", "./test2_end_rosbag_recording.sh"])
+            sys.exit(0) # End the test script
 
     else:
         rospy.loginfo("Else! => Error in test2 code")
     print()
-    r.sleep()
+    r.sleep()    
