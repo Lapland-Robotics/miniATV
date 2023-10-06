@@ -49,7 +49,7 @@ carla_min_throttle = 0.0
 carla_no_steering = 0.0
 
 drive_msg = AckermannDriveStamped()
-test_cmd_to_pt_miniATV = rospy.Publisher('/ackermann_cmd', AckermannDriveStamped, queue_size=1)
+test_cmd_to_pt_miniATV = rospy.Publisher('/emergency_cmd', AckermannDriveStamped, queue_size=1)
 #test_cmd_to_dt_miniATV = rospy.Publisher('/carla/ego_vehicle/ackermann_cmd', AckermannDriveStamped, queue_size=1)
 
 carla_drive_msg = CarlaEgoVehicleControl()
