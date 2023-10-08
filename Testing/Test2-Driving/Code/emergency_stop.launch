@@ -72,11 +72,11 @@
 	<include file="$(find timed_roslaunch)/timed_roslaunch.launch"> 
 		<arg name="time" value="20" />
 		<arg name="pkg" value="atv_setup" />
-		<arg name="file" value="emergency_break.py" />
+		<arg name="file" value="emergency_stop.py" />
 	</include>
 	
 	<!--
-	<node pkg="atv_setup" name="emergency_break" type="emergency_break.py" output="screen"> 
+	<node pkg="atv_setup" name="emergency_stop" type="emergency_stop.py" output="screen"> 
 	</node>
 	-->
 
