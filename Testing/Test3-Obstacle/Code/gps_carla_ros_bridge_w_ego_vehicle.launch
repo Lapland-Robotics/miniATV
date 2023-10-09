@@ -1,0 +1,74 @@
+<!-- -->
+<launch>
+  <!-- CARLA connection -->
+  <arg name='host' default='localhost'/>
+  <arg name='port' default='2000'/>
+  <arg name='timeout' default='10'/> 
+
+  <!-- Ego vehicle -->
+  <arg name='role_name' default='ego_vehicle'/>
+  <arg name="vehicle_filter" default='vehicle.*'/>
+  <arg name="spawn_point" default=""/><!-- use comma separated format "x,y,z,roll,pitch,yaw" -->
+
+  <!-- Map to load on startup (either a predefined CARLA town (e.g. 'Town01'), or a OpenDRIVE map file) -->
+  <arg name="town" default=''/>
+
+  <!-- Synchronous mode-->
+  <arg name='synchronous_mode' default=''/>
+  <arg name='synchronous_mode_wait_for_vehicle_control_command' default=''/>
+  <arg name='fixed_delta_seconds' default=''/>
+
+  <!--  ****** rosserial ***** Only if the sensor is connected to the laptop and not the miniATV ***
+  <node pkg="rosserial_python" type="serial_node.py" name="atv_gps_serial_node">
+  <param name="port" value="/dev/ttyUSB0"/>
+  <param name="baud" value="57600"/>
+  </node>
+  -->
+
+  <include file="$(find carla_ros_bridge)/launch/carla_ros_bridge.launch">
+    <arg name='host' value='$(arg host)'/>
+    <arg name='port' value='$(arg port)'/>
+    <arg name='town' value='$(arg town)'/>
+    <arg name='timeout' value='$(arg timeout)'/>
+    <arg name='synchronous_mode' value='$(arg synchronous_mode)'/>
+    <arg name='synchronous_mode_wait_for_vehicle_control_command' value='$(arg synchronous_mode_wait_for_vehicle_control_command)'/>
+    <arg name='fixed_delta_seconds' value='$(arg fixed_delta_seconds)'/>
+  </include>
+
+  <include file="$(find carla_ego_vehicle)/launch/carla_example_ego_vehicle.launch">
+    <arg name='host' value='$(arg host)'/>
+    <arg name='port' value='$(arg port)'/>
+    <arg name='timeout' value='$(arg timeout)'/>
+    <arg name="vehicle_filter" value='$(arg vehicle_filter)'/>
+    <arg name='role_name' value='$(arg role_name)'/>
+    <arg name="spawn_point" value="$(arg spawn_point)"/>
+  </include>
+
+
+
+
+  <!-- somehow, there is a 4-5s delay between the command in the ackermann topic and the carla_ackermann_control's forwarding
+      of that command to the steering topic that goes to the WinterSIM, so that topic is used directly without forwarding
+  <include file="$(find carla_ackermann_control)/launch/carla_ackermann_control.launch">
+  </include>
+  -->
+
+  
+  <!-- *** For test3: PointCloud2 to LaserScan *** See all params at http://wiki.ros.org/pointcloud_to_laserscan     -->
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="wintersim_pointcloud_to_laserscan">
+    <!-- Topic from which to read PointCloud2 -->  
+    <remap from="cloud_in" to="/carla/ego_vehicle/lidar/lidar1/point_cloud"/>
+    <!-- Topic to which LaserScan will be published -->  
+    <remap from="scan" to="/carla/ego_vehicle/lidar/scan"/> 
+  </node>
+
+
+  <node pkg="carla_manual_control" name="laptop_emergency_stop" type="laptop_emergency_stop.py" output="screen"> 
+	</node>
+
+
+  <include file="$(find carla_manual_control)/launch/carla_manual_control.launch">
+    <arg name='role_name' value='$(arg role_name)'/>
+  </include>
+  
+</launch>
