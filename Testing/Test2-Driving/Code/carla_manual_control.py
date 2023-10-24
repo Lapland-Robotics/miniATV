@@ -171,16 +171,18 @@ class World(object):
         # TODO: set new spawnpoint for starting position of rosbag(s)
         #self.dt_miniATV_start_loc = self.geodetic_gnss_to_carla_location(66.48072052, 25.7217960358, 79.8890151978) #lat, lon, alt
         #miniATV loc Transform(Location(x=5.226513, y=136.394989, z=77.975372), Rotation(pitch=-1.254856, yaw=0.012439, roll=-0.721680))
-        self.dt_miniATV_start_loc = self.geodetic_gnss_to_carla_location(66.48072052, 25.7217960358, 78.8890151978) #lat, lon, alt
-        print("teleport dt miniATV to start position ")
-        print(self.dt_miniATV_start_loc)
-        self.dt_miniATV.set_location(self.dt_miniATV_start_loc)
+        #self.dt_miniATV_start_loc = self.geodetic_gnss_to_carla_location(66.48072052, 25.7217960358, 78.8890151978) #lat, lon, alt
+        #print("teleport dt miniATV to start position ")
+        #print(self.dt_miniATV_start_loc)
+        #self.dt_miniATV.set_location(self.dt_miniATV_start_loc)
         #self.dt_miniATV.set_transform(carla.Transform(self.dt_miniATV_start_loc, carla.Rotation(pitch=0, yaw=0, roll=0)))
-        
+        self.dt_miniATV.set_transform(carla.Transform(carla.Location(x=1.131598, y=144.488235, z=79.380615), carla.Rotation(pitch=-0.667596, yaw=3.009010, roll=-0.142578)))
+    
         # Teleport the spectator perspective to a good viewpoint for the tests
         #TODO: Find perspective for spectator that resembles the camera view for the tests
         #self.world.get_spectator().set_transform(carla.Transform(carla.Location(x=4.598881, y=143.074280, z=79.111603), carla.Rotation(pitch=1.169055, yaw=-51.055328, roll=-0.142578)))
         #self.world.get_spectator().set_transform(self.dt_miniATV.get_transform())
+        self.world.get_spectator().set_transform(carla.Transform(carla.Location(x=3.335717, y=140.986176, z=78.637474), carla.Rotation(pitch=-3.652519, yaw=105.446297, roll=-0.142578)))
         
         # Test if geodetic to carla is accurate and minimize deviations:
         #self.test_geodetic_to_carla_result()
