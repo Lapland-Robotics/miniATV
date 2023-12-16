@@ -12,10 +12,7 @@ http://wiki.ros.org/rosbag/Code%20API
 
 """
 
-import subprocess #
-import yaml
 import os
-import rospy #
 import rosbag
 from rosbag.bag import Bag
 import csv
@@ -45,12 +42,8 @@ class AverageGNSS():
                 av_lat, av_lon, av_alt, av_hor_acc, av_vert_acc = self.msg_average(bag)
                 csv_row = [bag, av_lat, av_lon, av_alt, av_hor_acc, av_vert_acc]
                 csv_writer.writerow(csv_row)
-            #self.get_rosbag_info(bag)
-            #self.get_rosbag_topics(bag)
 
     def msg_average(self, bag_name):
-        print("rosbag messages for ")
-        print(bag_name)
         bag = rosbag.Bag(bag_name)
         latitudes = []
         longitudes = []
@@ -58,14 +51,11 @@ class AverageGNSS():
         hor_accs = []
         vert_accs = []
         for topic, msg, t in bag.read_messages(topics=['/atv_gps']):
-
-            #print(msg.position_covariance[8])
             latitudes.append(msg.latitude)
             longitudes.append(msg.longitude)
             altitudes.append(msg.altitude)
             hor_accs.append(msg.position_covariance[0])
             vert_accs.append(msg.position_covariance[8])
-
         bag.close()
         av_lat = sum(latitudes)/len(latitudes)
         av_lon = sum(longitudes)/len(longitudes)
