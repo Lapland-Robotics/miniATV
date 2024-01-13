@@ -1,0 +1,65 @@
+Name: 2023-10-09-18-05-40.bag
+physical twin speed change to 297.0 from previous 0.0
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 297.0)
+Name: 2023-10-09-18-20-23.bag
+('Highest dt vel ', 1.2457926273345947)
+('Highest pt speed ', 0)
+Name: 2023-10-09-18-51-34.bag
+physical twin speed change to 200.109375 from previous 0.0
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 287.4375)
+NAME: 2023-10-10-14-18-46.BAG
+PHYSICAL TWIN SPEED CHANGE TO 456.75 FROM PREVIOUS 0.0
+PHYSICAL TWIN SPEED CHANGE TO 478.96875 FROM PREVIOUS 5.0625
+PHYSICAL TWIN SPEED CHANGE TO 419.90625 FROM PREVIOUS 5.484375
+PHYSICAL TWIN SPEED CHANGE TO 435.515625 FROM PREVIOUS 0.0
+PHYSICAL TWIN SPEED CHANGE TO 541.828125 FROM PREVIOUS 0.703125
+PHYSICAL TWIN SPEED CHANGE TO 550.40625 FROM PREVIOUS 1.828125
+('HIGHEST DT VEL ', 0.3530483841896057)
+('HIGHEST PT SPEED ', 550.40625)
+Name: 2023-10-10-17-04-25.bag
+physical twin speed change to 226.6875 from previous 0.0
+('Highest dt vel ', 1.2457926273345947)
+('Highest pt speed ', 239.90625)
+Name: 2023-10-10-17-28-47.bag
+physical twin speed change to 295.875 from previous 4.5
+('Highest dt vel ', 1.2457926273345947)
+('Highest pt speed ', 295.875)
+Name: 2023-10-10-17-36-46.bag
+physical twin speed change to 283.21875 from previous 0.0
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 283.21875)
+Name: 2023-10-10-17-57-54.bag
+physical twin speed change to 410.484375 from previous 2.53125
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 410.484375)
+Name: 2023-10-10-18-28-13.bag
+physical twin speed change to 322.59375 from previous 0.0
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 382.921875)
+Name: 2023-10-10-18-37-21.bag
+physical twin speed change to 378.983764648 from previous 0.0
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 378.9837646484375)
+Name: 2023-10-10-18-45-30.bag
+physical twin speed change to 216.98500061 from previous 0.0
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 283.9224853515625)
+Name: 2023-10-10-18-51-41.bag
+physical twin speed change to 6.61000013351 from previous 0.0
+('Highest dt vel ', 1.2374964952468872)
+('Highest pt speed ', 353.3900146484375)
+Name: 2023-10-10-18-57-20.bag
+physical twin speed change to 297.0 from previous 1.125
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 297.0)
+Name: 2023-10-10-19-06-25.bag
+physical twin speed change to 357.75 from previous 2.95499992371
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 357.75)
+Name: 2023-10-10-19-12-51.bag
+physical twin speed change to 305.299987793 from previous 0.0
+('Highest dt vel ', 1.2376291751861572)
+('Highest pt speed ', 305.29998779296875)
+

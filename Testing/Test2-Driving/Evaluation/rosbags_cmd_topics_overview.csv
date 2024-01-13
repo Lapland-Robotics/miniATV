@@ -1,0 +1,16 @@
+rosbag name,start,end,duration,# msgs in rosbag,vehicle_control_cmd,frequency,# msgs,emergency_cmd,frequency,# msgs,ackermann_cmd,frequency,# msgs
+2023-10-09-18-05-40.bag,159.10382,184.103821,25.0,43543,/carla/ego_vehicle/vehicle_control_cmd,5.0,124,/emergency_cmd,5.0,124,/ackermann_cmd,20.0,690
+2023-10-09-18-20-23.bag,145.381189,170.431189,25.05,8600,/carla/ego_vehicle/vehicle_control_cmd,5.0,124,/emergency_cmd,5.0,124,,,
+2023-10-09-18-51-34.bag,72.550369,97.200369,24.65,40954,/carla/ego_vehicle/vehicle_control_cmd,5.0,122,/emergency_cmd,5.0,122,/ackermann_cmd,20.0,688
+2023-10-10-14-18-46.bag,69.425129,98.425129,29.0,45002,/carla/ego_vehicle/vehicle_control_cmd,20.0,723,/emergency_cmd,20.0,723,/ackermann_cmd,20.0,690
+2023-10-10-17-04-25.bag,39.712595,68.212596,28.5,44057,/carla/ego_vehicle/vehicle_control_cmd,5.0,141,/emergency_cmd,5.0,141,/ackermann_cmd,20.0,694
+2023-10-10-17-28-47.bag,61.160713,90.810713,29.65,43919,/carla/ego_vehicle/vehicle_control_cmd,5.0,147,/emergency_cmd,5.0,147,/ackermann_cmd,20.0,692
+2023-10-10-17-36-46.bag,22.886097,51.536097,28.65,42911,/carla/ego_vehicle/vehicle_control_cmd,5.0,142,/emergency_cmd,5.0,142,/ackermann_cmd,20.0,691
+2023-10-10-17-57-54.bag,32.735297,61.585298,28.85,42510,/carla/ego_vehicle/vehicle_control_cmd,5.0,143,/emergency_cmd,5.0,143,/ackermann_cmd,20.0,693
+2023-10-10-18-28-13.bag,49.422084,74.022085,24.6,56115,/carla/ego_vehicle/vehicle_control_cmd,5.0,122,/emergency_cmd,5.0,122,/ackermann_cmd,20.0,683
+2023-10-10-18-37-21.bag,76.536696,101.586696,25.05,55044,/carla/ego_vehicle/vehicle_control_cmd,5.0,124,/emergency_cmd,5.0,124,/ackermann_cmd,20.0,692
+2023-10-10-18-45-30.bag,27.623087,56.473088,28.85,55713,/carla/ego_vehicle/vehicle_control_cmd,5.0,143,/emergency_cmd,5.0,143,/ackermann_cmd,20.0,692
+2023-10-10-18-51-41.bag,23.173798,51.923799,28.75,57508,/carla/ego_vehicle/vehicle_control_cmd,5.0,143,/emergency_cmd,5.0,143,/ackermann_cmd,20.0,688
+2023-10-10-18-57-20.bag,22.309181,50.959182,28.65,57598,/carla/ego_vehicle/vehicle_control_cmd,5.0,142,/emergency_cmd,5.0,142,/ackermann_cmd,20.0,686
+2023-10-10-19-06-25.bag,20.913417,50.763417,29.85,51924,/carla/ego_vehicle/vehicle_control_cmd,5.0,148,/emergency_cmd,5.0,148,/ackermann_cmd,20.0,691
+2023-10-10-19-12-51.bag,23.148695,51.998695,28.85,54945,/carla/ego_vehicle/vehicle_control_cmd,5.0,143,/emergency_cmd,5.0,143,/ackermann_cmd,20.0,690
